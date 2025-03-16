@@ -1,11 +1,12 @@
 import React from 'react';
 import MainComponent from '../components/MainComponent';
+import BasicLayout from '../layouts/BasicLayout';
 
 const MainPage = () => {
     return (
-        <>
-            <MainComponent/>
-        </>
+        <BasicLayout>
+            <MainComponent />
+        </BasicLayout>
     );
 }
 
