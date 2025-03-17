@@ -29,9 +29,11 @@ const SidebarComponent = () => {
                             <img src={menu} alt="menu" className="w-6 h-6 opacity-30 hover:opacity-50"/>
                             <span className="text-base font-semibold text-gray-600 hover:text-blue-500">Menu</span>
                         </div>
-                        <div className="flex items-center space-x-4 cursor-pointer" onClick={handleAlert}>
+                        <div className="flex items-center space-x-4 cursor-pointer">
                             <img src={chart} alt="Chart" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <span className="text-base font-semibold text-gray-600 hover:text-blue-500">식단분석결과</span>
+                            <Link to="/Analysis" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                                식단분석결과
+                            </Link>
                         </div>
                         <div className="flex items-center space-x-4 cursor-pointer">
                             <img src={ticket} alt="Ticket" className="w-6 h-6 opacity-30 hover:opacity-50"/>

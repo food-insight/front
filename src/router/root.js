@@ -6,6 +6,7 @@ const Loading = <div className="loading-image"></div>
 
 const Main = lazy(() => import("../pages/MainPage"))
 const Records = lazy(() => import("../pages/RecordsPage"))
+const Analysis= lazy(()=> import("../pages/AnalysisPage"))
 
 const root = createBrowserRouter([
     {
@@ -15,6 +16,10 @@ const root = createBrowserRouter([
     {
         path: "/records",
         element: <Suspense fallback={Loading}><Records/></Suspense>
+    },
+    {
+        path: "/analysis",
+        element: <Suspense fallback={Loading}><Analysis/></Suspense>
     }
 ])
 
