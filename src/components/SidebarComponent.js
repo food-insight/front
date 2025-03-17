@@ -58,13 +58,11 @@ const SidebarComponent = () => {
                             <img src={calendar} alt="Calendar" className="w-6 h-6 opacity-30 hover:opacity-50"/>
                             <span className="text-base font-semibold text-gray-600 hover:text-blue-500">Calendar</span>
                         </div>
-                        <div className="flex items-center space-x-4 relative cursor-pointer" onClick={handleAlert}>
+                        <div className="flex items-center space-x-4 relative cursor-pointer">
                             <img src={chatbot} alt="Chatbot" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <span className="text-base font-semibold text-gray-600 hover:text-blue-500">Chatbot</span>
-                            <div
-                                className="bg-red-100 rounded-full w-[22px] h-3.5 flex justify-center items-center hover:bg-red-200">
-                                <span className="text-[10px] font-semibold text-red-600">49</span>
-                            </div>
+                            <Link to="/chatbot" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                                Chatbot
+                            </Link>
                         </div>
                         <div className="flex items-center space-x-4 pt-8 cursor-pointer" onClick={handleAlert}>
                             <img src={setting} alt="Setting" className="w-6 h-6 opacity-30 hover:opacity-50"/>
