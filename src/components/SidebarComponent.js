@@ -8,6 +8,7 @@ import logo from "../asset/icon/logo.png";
 import ticket from "../asset/icon/ticket.png";
 import setting from "../asset/icon/setting.png";
 import menu from "../asset/icon/menu.png";
+import recipe from "../asset/icon/recipe.png"
 
 const handleAlert = () => {
     alert("아직 준비중입니다.");
@@ -41,9 +42,17 @@ const SidebarComponent = () => {
                                 식단기록
                             </Link>
                         </div>
-                        <div className="flex items-center space-x-4 cursor-pointer" onClick={handleAlert}>
+                        <div className="flex items-center space-x-4 cursor-pointer">
                             <img src={document} alt="Document" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <span className="text-base font-semibold text-gray-600 hover:text-blue-500">맞춤식단 추천</span>
+                            <Link to="/Recommend" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                                맞춤식단 추천
+                            </Link>
+                        </div>
+                        <div className="flex items-center space-x-4 cursor-pointer">
+                            <img src={recipe} alt="recipe" className="w-6 h-6 opacity-30 hover:opacity-50"/>
+                            <Link to="/recipe" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                                레시피 추천
+                            </Link>
                         </div>
                         <div className="flex items-center space-x-4 cursor-pointer" onClick={handleAlert}>
                             <img src={calendar} alt="Calendar" className="w-6 h-6 opacity-30 hover:opacity-50"/>
