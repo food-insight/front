@@ -9,7 +9,7 @@ function RecommendComponent() {
     useEffect(() => {
         // 더미 데이터
         const dummyUserInfo = {
-            name: "김소현",
+            name: "홍길동",
             health_goal: "체중 감량"
         };
         const dummyMealPlan = {

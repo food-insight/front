@@ -127,7 +127,7 @@ function RecipePage() {
                 )}
             </div>
         </div>
-            );
-            }
+    );
+}
 
-            export default RecipePage;
+export default RecipePage;
