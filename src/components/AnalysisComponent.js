@@ -4,7 +4,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-function AnalysisComponent(props) {
+function AnalysisComponent() {
     const [analysisHistory, setAnalysisHistory] = useState([]);
     const [openStates, setOpenStates] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
@@ -18,7 +18,7 @@ function AnalysisComponent(props) {
             return date.toISOString().split("T")[0];
         }).reverse();
 
-        dates.forEach((date, index) => {
+        dates.forEach((date) => {
             const dayData = [
                 { meal: "아침", name: meals[0], carbs: Math.floor(Math.random() * 100) + 20, protein: Math.floor(Math.random() * 60) + 10, fat: Math.floor(Math.random() * 50) + 5, totalCalories: Math.floor(Math.random() * 500) + 100 },
                 { meal: "점심", name: meals[1], carbs: Math.floor(Math.random() * 100) + 20, protein: Math.floor(Math.random() * 60) + 10, fat: Math.floor(Math.random() * 50) + 5, totalCalories: Math.floor(Math.random() * 500) + 100 },
