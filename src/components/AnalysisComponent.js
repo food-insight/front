@@ -117,7 +117,6 @@ function AnalysisComponent(props) {
 
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
-            <div className="flex p-6 flex-col">
                 <div className="w-full pr-4 flex flex-col">
                     <h2 className="text-xl font-bold mb-4">식단 분석 결과</h2>
 
@@ -178,7 +177,6 @@ function AnalysisComponent(props) {
                         </div>
                     )}
                 </div>
-            </div>
         </div>
     );
 }
