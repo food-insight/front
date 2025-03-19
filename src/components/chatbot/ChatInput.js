@@ -4,9 +4,9 @@ const ChatInput = ({ onSend }) => {
   const [input, setInput] = useState("");
 
   const handleSend = () => {
-    if (!input.trim()) return;
-    onSend(input);
-    setInput("");
+    if (!input.trim()) return; // 빈 입력 방지
+    onSend(input); // 부모 컴포넌트로 입력값 전달
+    setInput(""); // 입력창 초기화
   };
 
   return (
