@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import memberRouter from "./memberRouter";
 
 const { createBrowserRouter } = require("react-router-dom");
 
@@ -14,6 +15,10 @@ const root = createBrowserRouter([
     {
         path: "",
         element: <Suspense fallback={Loading}><Main/></Suspense>
+    },
+    {
+        path: "member",
+        children: memberRouter()
     },
     {
         path: "/records",
