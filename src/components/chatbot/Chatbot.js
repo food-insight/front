@@ -1,30 +1,27 @@
 import React, { useState } from "react";
-import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
+import ChatOutput from "./ChatOutput";
 import axios from "axios";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([{ text: "안녕하세요! 무엇을 도와드릴까요?", sender: "bot" }]);
+  const [messages, setMessages] = useState([]);
 
+  // 메시지 전송 함수
   const sendMessage = async (message) => {
-    const userMessage = { text: message, sender: "user" };
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, { text: message, type: "user" }];
+    setMessages(newMessages);
 
     try {
-      const response = await axios.post("http://localhost:8080/chat", { message });
-      setMessages((prev) => [...prev, { text: response.data.reply, sender: "bot" }]);
+      const response = await axios.post("http://localhost:8000/chatbot", { message });
+      setMessages([...newMessages, { text: response.data.reply, type: "bot" }]);
     } catch (error) {
-      setMessages((prev) => [...prev, { text: "서버 오류가 발생했습니다.", sender: "bot" }]);
+      setMessages([...newMessages, { text: "에러 발생! 다시 시도해주세요.", type: "bot" }]);
     }
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-6 border border-gray-300 rounded-lg">
-      <div className="h-96 overflow-y-auto border-b p-4">
-        {messages.map((msg, index) => (
-          <MessageBubble key={index} text={msg.text} sender={msg.sender} />
-        ))}
-      </div>
+    <div className="chat-container w-full max-w-lg mx-auto p-4 border rounded-lg shadow-md">
+      <ChatOutput messages={messages} />
       <ChatInput onSend={sendMessage} />
     </div>
   );
