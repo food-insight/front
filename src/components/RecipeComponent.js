@@ -117,7 +117,7 @@ export const recipes = {
     }
 };
 
-function RecipePage() {
+function RecipeComponent() {
     const [selectedRecipe, setSelectedRecipe] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -226,4 +226,4 @@ function RecipePage() {
     );
 }
 
-export default RecipePage;
+export default RecipeComponent;

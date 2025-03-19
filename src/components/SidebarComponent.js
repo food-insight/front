@@ -23,7 +23,7 @@ const SidebarComponent = () => {
                         <Link to="/">
                             <img src={logo} alt="Logo" className="w-16 h-16 mb-4 cursor-pointer hover:opacity-80"/>
                         </Link>
-                        <h1 className="text-2xl font-semibold text-gray-800">Brand Name</h1>
+                        <h1 className="text-2xl font-semibold text-gray-800">영양 인사이트</h1>
                     </div>
                     <div className="flex flex-col items-start pr-8 pl-8 space-y-6">
                         <div className="flex items-center space-x-4 cursor-pointer" onClick={handleAlert}>
@@ -64,14 +64,18 @@ const SidebarComponent = () => {
                                 Chatbot
                             </Link>
                         </div>
-                        <div className="flex items-center space-x-4 pt-8 cursor-pointer" onClick={handleAlert}>
+                        <div className="flex items-center space-x-4 pt-8 cursor-pointer">
                             <img src={setting} alt="Setting" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <span className="text-base font-semibold text-gray-600 hover:text-blue-500">마이페이지</span>
+                            <Link to="/mypage" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                                마이 페이지
+                            </Link>
                         </div>
                     </div>
                 </div>
                 <div className="flex justify-end pb-10 pr-8 cursor-pointer">
-                    <span className="text-base font-semibold text-gray-600 hover:text-red-500">Logout</span>
+                    <Link to="/login" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                        Login
+                    </Link>
                 </div>
             </div>
         </div>

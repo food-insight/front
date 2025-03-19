@@ -11,6 +11,8 @@ const Chatbot = lazy(() => import("../pages/ChatbotPage"));
 const Analysis = lazy(()=> import("../pages/AnalysisPage"))
 const Recommend= lazy(()=> import("../pages/RecommendPage"))
 const Recipe= lazy(()=> import("../pages/RecipePage"))
+const Login= lazy(()=> import("../pages/LoginPage"))
+const Signup= lazy(()=> import("../pages/SignupPage"))
 
 
 const root = createBrowserRouter([
@@ -35,14 +37,21 @@ const root = createBrowserRouter([
             path: "/recommend",
             element:(<RecipeProvider>
                 <Suspense fallback={Loading}><Recommend/></Suspense>
-        </RecipeProvider>)
+            </RecipeProvider>)
     },
     {
         path: "/recipe",
         element: (<RecipeProvider><Suspense fallback={Loading}><Recipe/></Suspense>
         </RecipeProvider>)
+    },
+    {
+        path: "/login",
+        element: <Suspense fallback={Loading}><Login/></Suspense>
+    },
+    {
+        path: "/signup",
+        element: <Suspense fallback={Loading}><Signup/></Suspense>
     }
-
 ])
 
 export default root
