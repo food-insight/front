@@ -184,11 +184,18 @@ function AnalysisComponent() {
                                             </div>
                                         ) : null;
                                     })}
-                                </div>
+                                    <div className="mt-4">
+                                        <p className="font-medium">🍽️ 총
+                                            칼로리: {dailyData[date].totalCalories} kcal</p>
+                                    </div>
+                                    <div
+                                        className="mt-4 text-sm text-gray-500">{dailyData[date].totalCalories > 1500 ? "너무 많이 드셨어요!" : "균형 잡힌 식사입니다!"}</div>
+                              
                             </div>
-                        ))}
+                            </div>
+                            ))}
                     </div>
-                )}
+                    )}
             </div>
         </div>
     );
