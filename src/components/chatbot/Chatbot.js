@@ -1,31 +1,42 @@
 import React, { useState } from "react";
-import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
-import axios from "axios";
+import ChatOutput from "./ChatOutput";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([{ text: "안녕하세요! 무엇을 도와드릴까요?", sender: "bot" }]);
+  const [messages, setMessages] = useState([]);
 
-  const sendMessage = async (message) => {
-    const userMessage = { text: message, sender: "user" };
-    setMessages((prev) => [...prev, userMessage]);
+  const handleSend = async (input) => {
+    const userMessage = { input, output: "⏳ 응답을 기다리는 중..." };
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
 
     try {
-      const response = await axios.post("http://localhost:8080/chat", { message });
-      setMessages((prev) => [...prev, { text: response.data.reply, sender: "bot" }]);
+      // **백엔드 연결 전이라면 여기서 더미 응답 사용**
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+
+      const data = await response.json();
+      setMessages((prevMessages) =>
+        prevMessages.map((msg, idx) =>
+          idx === prevMessages.length - 1 ? { ...msg, output: data.response } : msg
+        )
+      );
     } catch (error) {
-      setMessages((prev) => [...prev, { text: "서버 오류가 발생했습니다.", sender: "bot" }]);
+      console.error("백엔드 오류:", error);
+      setMessages((prevMessages) =>
+        prevMessages.map((msg, idx) =>
+          idx === prevMessages.length - 1 ? { ...msg, output: "⚠️ 오류 발생! 다시 시도해주세요." } : msg
+        )
+      );
     }
   };
 
   return (
     <div className="w-full max-w-lg mx-auto p-6 border border-gray-300 rounded-lg">
-      <div className="h-96 overflow-y-auto border-b p-4">
-        {messages.map((msg, index) => (
-          <MessageBubble key={index} text={msg.text} sender={msg.sender} />
-        ))}
-      </div>
-      <ChatInput onSend={sendMessage} />
+      <ChatOutput messages={messages} />
+      <ChatInput onSend={handleSend} />
     </div>
   );
 };
