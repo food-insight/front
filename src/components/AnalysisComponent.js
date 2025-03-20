@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
+import API_SERVER_HOST from "../api/apiConfig";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -9,10 +10,19 @@ const AnalysisComponent = () => {
     const [nutritionalInfo, setNutritionalInfo] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
     const [visibleFoodInfo, setVisibleFoodInfo] = useState({});  // 상태 추가
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjQ1MzkzNSwianRpIjoiNjg5YjVjMmQtZGZkNC00NGE2LWExZmEtYTU2N2RiM2NjMTM0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3NDI0NTM5MzUsImNzcmYiOiI5NzNiY2NkOS1mY2ZlLTQ2NTMtODk3YS03ODY5NWUwMTQ4ZTQiLCJleHAiOjE3NDI1NDAzMzV9.OOVvXE8SbegLmJC4-9mJRyGDysqPE5olwoxgA36usEE';  // 토큰은 실제로 사용하는 토큰으로 대체하세요.
+   // const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjQ1MzkzNSwianRpIjoiNjg5YjVjMmQtZGZkNC00NGE2LWExZmEtYTU2N2RiM2NjMTM0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3NDI0NTM5MzUsImNzcmYiOiI5NzNiY2NkOS1mY2ZlLTQ2NTMtODk3YS03ODY5NWUwMTQ4ZTQiLCJleHAiOjE3NDI1NDAzMzV9.OOVvXE8SbegLmJC4-9mJRyGDysqPE5olwoxgA36usEE';
+
+// localStorage에서 토큰 가져오기
+    const token = localStorage.getItem("accessToken");
+    console.log("로그--->",token);
 
     useEffect(() => {
-        fetch('http://localhost:5000/api/meals/', {
+        if (!token) {
+            console.error("토큰이 없습니다. 로그인이 필요합니다.");
+            return;
+        }
+
+        fetch(`${API_SERVER_HOST}/meals/`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -25,7 +35,7 @@ const AnalysisComponent = () => {
                 const mealData = [];
 
                 data.meals.forEach((meal) => {
-                    const mealDate = meal.date; // 날짜 가져오기
+                    const mealDate = meal.date;
                     meal.foods.forEach((food) => {
                         meals.push(food.food_name);
                         mealData.push({
@@ -37,7 +47,7 @@ const AnalysisComponent = () => {
                 });
 
                 meals.forEach((foodName) => {
-                    fetch(`http://localhost:5000/api/nutrition?food=${foodName}&quantity=100&source=rag&unit=g`, {
+                    fetch(`${API_SERVER_HOST}/nutrition?food=${foodName}&quantity=100&source=rag&unit=g`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -60,14 +70,14 @@ const AnalysisComponent = () => {
                             }));
                         })
                         .catch((error) => {
-                            console.error('Error fetching nutrition data: ', error);
+                            console.error('영양 정보 조회 중 오류 발생:', error);
                         });
                 });
 
                 setAnalysisHistory(mealData);
             })
             .catch((error) => {
-                console.error('Error fetching meals data: ', error);
+                console.error('식단 정보 조회 중 오류 발생:', error);
             });
     }, [token]);
 
@@ -76,7 +86,6 @@ const AnalysisComponent = () => {
         const match = regex.exec(description);
         return match ? match[1] : '정보 없음';
     };
-
     const dailyData = {};
     analysisHistory.forEach((entry) => {
         if (!dailyData[entry.date]) {
@@ -148,6 +157,7 @@ const AnalysisComponent = () => {
                 <div className="w-full flex flex-col items-center">
                     {analysisHistory.length > 0 && (
                         <div className="h-96 w-full lg:w-1/2">
+                            <p>일별 영양소 섭취량</p>
                             <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
                         </div>
                     )}

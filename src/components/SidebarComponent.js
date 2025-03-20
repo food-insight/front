@@ -29,7 +29,6 @@ const SidebarComponent = () => {
 
     const handleLogoutClick = () => {
         doLogout();
-        alert("로그아웃되었습니다.");
     };
 
     return (
