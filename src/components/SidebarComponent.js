@@ -54,9 +54,11 @@ const SidebarComponent = () => {
                                 추천 레시피
                             </Link>
                         </div>
-                        <div className="flex items-center space-x-4 cursor-pointer" onClick={handleAlert}>
+                        <div className="flex items-center space-x-4 cursor-pointer">
                             <img src={calendar} alt="Calendar" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <span className="text-base font-semibold text-gray-600 hover:text-blue-500">Calendar</span>
+                            <Link to="/calendar" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                                Calendar
+                            </Link>
                         </div>
                         <div className="flex items-center space-x-4 relative cursor-pointer">
                             <img src={chatbot} alt="Chatbot" className="w-6 h-6 opacity-30 hover:opacity-50"/>

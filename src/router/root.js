@@ -13,7 +13,7 @@ const Recommend= lazy(()=> import("../pages/RecommendPage"))
 const Recipe= lazy(()=> import("../pages/RecipePage"))
 const Login= lazy(()=> import("../pages/LoginPage"))
 const Signup= lazy(()=> import("../pages/SignupPage"))
-
+const Calendar= lazy(()=> import("../pages/CalendarPage"))
 
 const root = createBrowserRouter([
     {
@@ -51,6 +51,10 @@ const root = createBrowserRouter([
     {
         path: "/signup",
         element: <Suspense fallback={Loading}><Signup/></Suspense>
+    },
+    {
+        path: "/calendar",
+        element: <Suspense fallback={Loading}><Calendar/></Suspense>
     }
 ])
 
