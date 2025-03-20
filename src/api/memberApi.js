@@ -16,8 +16,6 @@ export const loginMember = async (loginParam) => {
     const { data } = res;
     const accessToken = res.headers['authorization'];
     const refreshToken = res.headers['refresh-token'];
-
-
     return { ...data, accessToken, refreshToken };
 }
 
