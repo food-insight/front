@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from 'react-router-dom';
+import { useSelector } from "react-redux";
+import useCustomLogin from "../hooks/useCustomLogin";
+import LoginModal from "./member/LoginModal";
 import chatbot from "../asset/icon/chatbot.png";
 import calendar from "../asset/icon/calendar.png";
 import chart from "../asset/icon/chart.png";
@@ -8,13 +11,27 @@ import logo from "../asset/icon/logo.png";
 import ticket from "../asset/icon/ticket.png";
 import setting from "../asset/icon/setting.png";
 import menu from "../asset/icon/menu.png";
-import recipe from "../asset/icon/recipe.png"
+import recipe from "../asset/icon/recipe.png";
 
 const handleAlert = () => {
     alert("아직 준비중입니다.");
 };
 
 const SidebarComponent = () => {
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    const { doLogout } = useCustomLogin();
+    const loginState = useSelector(state => state.loginSlice);
+    const isLogin = loginState.email ? true : false;
+
+    const handleLoginClick = () => {
+        setIsLoginModalOpen(true);
+    };
+
+    const handleLogoutClick = () => {
+        doLogout();
+        alert("로그아웃되었습니다.");
+    };
+
     return (
         <div className="relative w-56 h-screen bg-white caret-transparent">
             <div className="fixed w-56 h-screen top-0 left-0 bg-white flex flex-col justify-between">
@@ -71,9 +88,14 @@ const SidebarComponent = () => {
                     </div>
                 </div>
                 <div className="flex justify-end pb-10 pr-8 cursor-pointer">
-                    <span className="text-base font-semibold text-gray-600 hover:text-red-500">Logout</span>
+                    {isLogin ? (
+                        <span className="text-base font-semibold text-gray-600 hover:text-red-500" onClick={handleLogoutClick}>Logout</span>
+                    ) : (
+                        <span className="text-base font-semibold text-gray-600 hover:text-blue-500" onClick={handleLoginClick}>Login</span>
+                    )}
                 </div>
             </div>
+            {isLoginModalOpen && <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />}
         </div>
     );
 };
