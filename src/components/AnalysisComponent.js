@@ -1,55 +1,98 @@
-import React, { useState, useEffect } from "react";
-import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
+import React, { useState, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-function AnalysisComponent() {
+const AnalysisComponent = () => {
     const [analysisHistory, setAnalysisHistory] = useState([]);
-    const [openStates, setOpenStates] = useState({});
+    const [nutritionalInfo, setNutritionalInfo] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
+    const [visibleFoodInfo, setVisibleFoodInfo] = useState({});  // 상태 추가
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjQ1MzkzNSwianRpIjoiNjg5YjVjMmQtZGZkNC00NGE2LWExZmEtYTU2N2RiM2NjMTM0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3NDI0NTM5MzUsImNzcmYiOiI5NzNiY2NkOS1mY2ZlLTQ2NTMtODk3YS03ODY5NWUwMTQ4ZTQiLCJleHAiOjE3NDI1NDAzMzV9.OOVvXE8SbegLmJC4-9mJRyGDysqPE5olwoxgA36usEE';  // 토큰은 실제로 사용하는 토큰으로 대체하세요.
 
     useEffect(() => {
-        const meals = ["오트밀", "연어 스테이크", "닭가슴살 샐러드"];
-        const dummyData = [];
-        const dates = Array.from({ length: 30 }, (_, i) => {
-            const date = new Date();
-            date.setUTCDate(date.getUTCDate() - i);
-            return date.toISOString().split("T")[0];
-        }).reverse();
+        fetch('http://localhost:5000/api/meals/', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                const meals = [];
+                const mealData = [];
 
-        dates.forEach((date) => {
-            const dayData = [
-                { meal: "아침", name: meals[0], carbs: Math.floor(Math.random() * 100) + 20, protein: Math.floor(Math.random() * 60) + 10, fat: Math.floor(Math.random() * 50) + 5, totalCalories: Math.floor(Math.random() * 500) + 100 },
-                { meal: "점심", name: meals[1], carbs: Math.floor(Math.random() * 100) + 20, protein: Math.floor(Math.random() * 60) + 10, fat: Math.floor(Math.random() * 50) + 5, totalCalories: Math.floor(Math.random() * 500) + 100 },
-                { meal: "저녁", name: meals[2], carbs: Math.floor(Math.random() * 100) + 20, protein: Math.floor(Math.random() * 60) + 10, fat: Math.floor(Math.random() * 50) + 5, totalCalories: Math.floor(Math.random() * 500) + 100 },
-            ];
-
-            dayData.forEach((entry) => {
-                dummyData.push({
-                    date: date,
-                    meal: entry.meal,
-                    food: entry.name,
-                    carbs: entry.carbs,
-                    protein: entry.protein,
-                    fat: entry.fat,
-                    totalCalories: entry.totalCalories
+                data.meals.forEach((meal) => {
+                    const mealDate = meal.date; // 날짜 가져오기
+                    meal.foods.forEach((food) => {
+                        meals.push(food.food_name);
+                        mealData.push({
+                            date: mealDate,
+                            meal: meal.meal_time,
+                            food: food.food_name
+                        });
+                    });
                 });
-            });
-        });
 
-        setAnalysisHistory(dummyData);
-    }, []);
+                meals.forEach((foodName) => {
+                    fetch(`http://localhost:5000/api/nutrition?food=${foodName}&quantity=100&source=rag&unit=g`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then((response) => response.json())
+                        .then((nutritionData) => {
+                            const description = nutritionData.nutrients.description;
+                            const nutrients = {
+                                calories: extractNutrient(description, '칼로리'),
+                                carbs: extractNutrient(description, '탄수화물'),
+                                protein: extractNutrient(description, '단백질'),
+                                fat: extractNutrient(description, '지방')
+                            };
+
+                            setNutritionalInfo((prev) => ({
+                                ...prev,
+                                [foodName]: nutrients
+                            }));
+                        })
+                        .catch((error) => {
+                            console.error('Error fetching nutrition data: ', error);
+                        });
+                });
+
+                setAnalysisHistory(mealData);
+            })
+            .catch((error) => {
+                console.error('Error fetching meals data: ', error);
+            });
+    }, [token]);
+
+    const extractNutrient = (description, nutrient) => {
+        const regex = new RegExp(`${nutrient}:\\s*(\\d+\\.?\\d*)`, 'g');
+        const match = regex.exec(description);
+        return match ? match[1] : '정보 없음';
+    };
 
     const dailyData = {};
     analysisHistory.forEach((entry) => {
         if (!dailyData[entry.date]) {
-            dailyData[entry.date] = { carbs: 0, protein: 0, fat: 0, totalCalories: 0 };
+            dailyData[entry.date] = { carbs: 0, protein: 0, fat: 0, totalCalories: 0, meals: {} };
         }
-        dailyData[entry.date].carbs += entry.carbs;
-        dailyData[entry.date].protein += entry.protein;
-        dailyData[entry.date].fat += entry.fat;
-        dailyData[entry.date].totalCalories += entry.totalCalories;
+        if (nutritionalInfo[entry.food]) {
+            dailyData[entry.date].carbs += parseFloat(nutritionalInfo[entry.food].carbs) || 0;
+            dailyData[entry.date].protein += parseFloat(nutritionalInfo[entry.food].protein) || 0;
+            dailyData[entry.date].fat += parseFloat(nutritionalInfo[entry.food].fat) || 0;
+            dailyData[entry.date].totalCalories += parseFloat(nutritionalInfo[entry.food].calories) || 0;
+
+            if (!dailyData[entry.date].meals[entry.meal]) {
+                dailyData[entry.date].meals[entry.meal] = [];
+            }
+            dailyData[entry.date].meals[entry.meal].push(entry.food);
+        }
     });
 
     const allDates = Object.keys(dailyData).sort();
@@ -61,144 +104,104 @@ function AnalysisComponent() {
         labels: visibleDates,
         datasets: [
             {
-                label: "탄수화물 (g)",
+                label: '탄수화물 (g)',
                 data: visibleDates.map((d) => dailyData[d]?.carbs || 0),
-                borderColor: "rgb(255, 99, 132)",
+                borderColor: 'rgb(255, 99, 132)',
                 fill: false,
             },
             {
-                label: "단백질 (g)",
+                label: '단백질 (g)',
                 data: visibleDates.map((d) => dailyData[d]?.protein || 0),
-                borderColor: "rgb(54, 162, 235)",
+                borderColor: 'rgb(54, 162, 235)',
                 fill: false,
             },
             {
-                label: "지방 (g)",
+                label: '지방 (g)',
                 data: visibleDates.map((d) => dailyData[d]?.fat || 0),
-                borderColor: "rgb(255, 206, 86)",
+                borderColor: 'rgb(255, 206, 86)',
                 fill: false,
             },
         ],
     };
 
-    const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            title: {
-                display: true,
-                text: "일별 영양소 섭취량",
-            },
-            legend: {
-                position: "bottom",
-            },
-            interaction: {
-                intersect: false,
-            },
-        },
-        scales: {
-            y: {
-                ticks: {
-                    callback: (value) => value + " g",
-                },
-            },
-        },
-        elements: {
-            point: {
-                radius: 4,
-                borderWidth: 3,
-            },
-        },
-    };
-
-    const toggleOpenState = (date, meal) => {
-        setOpenStates((prevState) => {
-            const key = `${date}-${meal}`;
-            return {
-                ...prevState,
-                [key]: !prevState[key],
-            };
-        });
+    // 음식 정보 보이기/숨기기 토글
+    const toggleFoodInfo = (date, meal, food) => {
+        setVisibleFoodInfo((prev) => ({
+            ...prev,
+            [`${date}-${meal}-${food}`]: !prev[`${date}-${meal}-${food}`]
+        }));
     };
 
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
-            <div className="w-full pr-4 flex flex-col">
-                <h2 className="text-xl font-bold mb-4">식단 분석 결과</h2>
-                <div className="relative w-full flex justify-center items-center mt-8">
-                    <button
-                        className="absolute left-48 top-1/2 -translate-y-1/2 text-blue-500 w-10 h-10 bg-gray-50 rounded-[10px] hover:bg-gray-200"
-                        onClick={() => setCurrentWeek((prev) => Math.max(prev - 1, 0))}
-                        disabled={currentWeek === 0}
-                    >
-                        ◀
-                    </button>
+            <h2 className="text-xl font-bold mb-4">식단 분석 결과</h2>
 
+            <div className="relative w-full flex justify-center items-center mt-8">
+                <button
+                    className="absolute left-48 top-1/2 -translate-y-1/2 text-blue-500 w-10 h-10 bg-gray-50 rounded-[10px] hover:bg-gray-200"
+                    onClick={() => setCurrentWeek((prev) => Math.max(prev - 1, 0))}
+                    disabled={currentWeek === 0}
+                >
+                    ◀
+                </button>
 
-                    {/* 차트 */}
-                    <div className="w-full flex flex-col items-center">
-                        {analysisHistory.length > 0 && (
-                            <div className="h-96 w-full lg:w-1/2">
-                                <Line data={chartData} options={options}/>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* 다음 주 버튼 */}
-                    <button
-                        className="absolute right-48 top-1/2 -translate-y-1/2 text-blue-500 w-10 h-10 bg-gray-50 rounded-[10px] hover:bg-gray-200"
-                        onClick={() => setCurrentWeek((prev) => prev + 1)}
-                        disabled={endIdx >= allDates.length}
-                    >
-                        ▶
-                    </button>
+                <div className="w-full flex flex-col items-center">
+                    {analysisHistory.length > 0 && (
+                        <div className="h-96 w-full lg:w-1/2">
+                            <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
+                    )}
                 </div>
 
+                <button
+                    className="absolute right-48 top-1/2 -translate-y-1/2 text-blue-500 w-10 h-10 bg-gray-50 rounded-[10px] hover:bg-gray-200"
+                    onClick={() => setCurrentWeek((prev) => prev + 1)}
+                    disabled={endIdx >= allDates.length}
+                >
+                    ▶
+                </button>
+            </div>
 
-                {analysisHistory.length > 0 && (
-                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-                        {visibleDates.map((date) => (
-                            <div key={date} className="bg-white p-6 rounded-lg shadow-lg border space-y-4">
-                                <h3 className="text-lg font-semibold mb-2">{date}</h3>
-                                <div className="space-y-4">
-                                    {["아침", "점심", "저녁"].map((meal, idx) => {
-                                        const mealData = analysisHistory.find((entry) => entry.date === date && entry.meal === meal);
-                                        const isOpen = openStates[`${date}-${meal}`];
-                                        return mealData ? (
-                                            <div key={idx} className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <p className="font-medium">🍎 {meal}: {mealData.food}</p>
-                                                    <button className="text-blue-500"
-                                                            onClick={() => toggleOpenState(date, meal)}>
-                                                        {isOpen ? "↩" : "↩"}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                {visibleDates.map((date) => (
+                    <div key={date} className="bg-white p-6 rounded-lg shadow-lg border space-y-4">
+                        <h3 className="text-lg font-semibold">{date}</h3>
+                        {['아침', '점심', '저녁'].map((meal) => {
+                            const mealFoods = dailyData[date]?.meals[meal] || [];
+                            return mealFoods.length > 0 ? (
+                                <div key={meal} className="space-y-2">
+                                    <p className="font-medium">🍎 {meal}</p>
+                                    <ul className="list-disc pl-4">
+                                        {mealFoods.map((food) => {
+                                            const isFoodVisible = visibleFoodInfo[`${date}-${meal}-${food}`];
+                                            return (
+                                                <p key={food}>
+                                                    <button
+                                                        onClick={() => toggleFoodInfo(date, meal, food)}
+                                                    >
+                                                        ➡️{food}
                                                     </button>
-                                                </div>
-                                                {isOpen && (
-                                                    <div className="space-y-2">
-                                                        <p>￮ 탄수화물: {mealData.carbs}g</p>
-                                                        <p>￮ 단백질: {mealData.protein}g</p>
-                                                        <p>￮ 지방: {mealData.fat}g</p>
-                                                        <p>￮ 칼로리: {mealData.totalCalories} kcal</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : null;
-                                    })}
-                                    <div className="mt-4">
-
-                                        <p className="font-medium">🍽️ 총
-                                            칼로리: {dailyData[date].totalCalories} kcal</p>
-                                    </div>
-                                    <div
-                                        className="mt-4 text-sm text-gray-500">{dailyData[date].totalCalories > 1500 ? "너무 많이 드셨어요!" : "균형 잡힌 식사입니다!"}
-                                    </div>
+                                                    : {nutritionalInfo[food]?.calories || '정보 없음'} kcal
+                                                    {isFoodVisible && (
+                                                        <div className="space-y-1 mt-2">
+                                                            <ul>탄수화물: {nutritionalInfo[food]?.carbs}g</ul>
+                                                            <ul>단백질: {nutritionalInfo[food]?.protein}g</ul>
+                                                            <ul>지방: {nutritionalInfo[food]?.fat}g</ul>
+                                                        </div>
+                                                    )}
+                                                </p>
+                                            );
+                                        })}
+                                    </ul>
                                 </div>
-                            </div>
-                            ))}
+                            ) : null;
+                        })}
+                        <p className="font-medium mt-4">총 칼로리: {dailyData[date]?.totalCalories || 0} kcal</p>
                     </div>
-                    )}
+                ))}
+            </div>
         </div>
-        </div>
-    );}
+    );
+};
 
 export default AnalysisComponent;
