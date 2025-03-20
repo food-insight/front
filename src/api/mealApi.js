@@ -31,3 +31,28 @@ export const fetchMeals = async () => {
     }
 };
 
+export const deleteMeal = async (mealId) => {
+    try {
+        const res = await jwtAxios.delete(`${prefix}/${mealId}`);
+        return res.data;
+    } catch (error) {
+        console.error("Failed to delete meal:", error);
+        throw error;
+    }
+};
+
+export const updateMeal = async (mealId, mealData) => {
+    const header = {
+        headers: {
+            "Content-Type": "application/json"
+        }
+    };
+
+    try {
+        const res = await jwtAxios.put(`${prefix}/${mealId}`, mealData, header);
+        return res.data;
+    } catch (error) {
+        console.error("Failed to update meal:", error);
+        throw error;
+    }
+};

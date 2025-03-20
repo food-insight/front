@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import React, { useState, useEffect } from "react";
 import { FaCamera } from "react-icons/fa";
 import { recordMeal, fetchMeals, deleteMeal } from "../api/mealApi";
@@ -81,6 +80,24 @@ function RecordsComponent(props) {
         setSelectedMeal(null);
     };
 
+    const handleCheckboxChange = (mealId) => {
+        setSelectedMeals(prevSelectedMeals =>
+            prevSelectedMeals.includes(mealId)
+                ? prevSelectedMeals.filter(id => id !== mealId)
+                : [...prevSelectedMeals, mealId]
+        );
+    };
+
+    const handleDeleteSelected = async () => {
+        try {
+            await Promise.all(selectedMeals.map(mealId => deleteMeal(mealId)));
+            setSelectedMeals([]);
+            alert("선택한 식사가 삭제되었습니다.");
+            loadMeals(); // Reload meals after deleting
+        } catch (error) {
+            alert("식사 삭제에 실패했습니다.");
+        }
+    };
 
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
@@ -148,8 +165,7 @@ function RecordsComponent(props) {
             <table className="min-w-full bg-white">
                 <thead>
                 <tr>
-                    <th className="py-2 px-4 border-b">Name</th>
-                    <th className="py-2 px-4 border-b">Weight</th>
+                    <th className="py-2 px-4 border-b"></th>
                     <th className="py-2 px-4 border-b">Title</th>
                     <th className="py-2 px-4 border-b">Date</th>
                     <th className="py-2 px-4 border-b">Meal</th>
@@ -157,12 +173,6 @@ function RecordsComponent(props) {
                 </tr>
                 </thead>
                 <tbody>
-                {dummyData.map((item, index) => (
-                    <tr key={index} className="text-center">
-                        <td className="py-2 px-4 border-b">{item.name}</td>
-                        <td className="py-2 px-4 border-b">{item.weight}</td>
-                        <td className="py-2 px-4 border-b">{item.date}</td>
-                        <td className="py-2 px-4 border-b">{item.calories}</td>
                 {meals.map((meal) => (
                     <tr key={meal.mid} className="text-center">
                         <td className="py-2 px-4 border-b">
@@ -181,9 +191,6 @@ function RecordsComponent(props) {
                 </tbody>
             </table>
             <div className="flex content-center justify-center space-x-4 mt-4">
-                <button className="border border-solid border-[#605bff1a] text-[#605bff] px-32 py-2 rounded-xl">삭제
-                </button>
-                <button className="bg-[#605bff] text-white px-32 py-2 rounded-xl">저장</button>
                 <button onClick={handleDeleteSelected} className="border border-solid border-[#605bff1a] text-[#605bff] px-32 py-2 rounded-xl">삭제</button>
                 <button onClick={handleSubmit} className="bg-[#605bff] text-white px-32 py-2 rounded-xl">저장</button>
             </div>
