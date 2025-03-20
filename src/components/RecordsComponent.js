@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaCamera } from "react-icons/fa";
 import { recordMeal, fetchMeals, deleteMeal } from "../api/mealApi";
+import { uploadImage } from "../api/imageApi";
+import ModalComponent from "./ModalComponent";
 
 function RecordsComponent(props) {
     const [date, setDate] = useState("");
@@ -8,12 +11,43 @@ function RecordsComponent(props) {
     const [dishName, setDishName] = useState("");
     const [description, setDescription] = useState("");
     const [foodNames, setFoodNames] = useState([]);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
     const [meals, setMeals] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedMeal, setSelectedMeal] = useState(null);
+    const [selectedMeals, setSelectedMeals] = useState([]);
+
+    useEffect(() => {
+        loadMeals();
+    }, []);
+
+    const loadMeals = async () => {
+        try {
+            const data = await fetchMeals();
+            setMeals(data.meals);
+        } catch (error) {
+            console.error("Failed to load meals:", error);
+        }
+    };
 
     const handleDateChange = (e) => setDate(e.target.value);
     const handleMealChange = (e) => setMealType(e.target.value);
     const handleDishChange = (e) => setDishName(e.target.value);
     const handleDescriptionChange = (e) => setDescription(e.target.value);
+    const handleFoodNamesChange = (e) => setFoodNames(e.target.value.split(',').map(item => item.trim()));
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        setImageFile(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const handleClearImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+        document.getElementById('imageInput').value = null;
+    };
+
     const handleSubmit = async () => {
         const mealData = {
             meal_time: mealType,
@@ -25,11 +59,27 @@ function RecordsComponent(props) {
         try {
             const mealResponse = await recordMeal(mealData);
             alert("식사 기록이 저장되었습니다.");
+
+            if (imageFile && mealResponse.meal_id) {
+                await uploadImage(imageFile, mealResponse.meal_id);
+                alert("이미지 업로드가 성공적으로 완료되었습니다.");
+            }
+
+            loadMeals(); // Reload meals after adding
         } catch (error) {
             alert("식사 기록 저장 또는 이미지 업로드에 실패했습니다.");
         }
     };
 
+    const handleTitleClick = (meal) => {
+        setSelectedMeal(meal);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedMeal(null);
+    };
 
 
     return (
@@ -37,8 +87,16 @@ function RecordsComponent(props) {
             <h2 className="text-xl font-bold mb-4">식단 기록</h2>
             <div className="flex flex-col items-center mb-4">
                 <div className="w-32 h-32 rounded-full border border-gray-300 flex items-center justify-center">
-                    <FaCamera className="text-4xl text-gray-500 cursor-pointer"/>
+                    {imagePreview ? (
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                        <FaCamera className="text-4xl text-gray-500 cursor-pointer" onClick={() => document.getElementById('imageInput').click()} />
+                    )}
+                    <input id="imageInput" type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
                 </div>
+                {imagePreview && (
+                    <button onClick={handleClearImage} className=" text-red-500">삭제</button>
+                )}
                 <p className="text-sm text-gray-600 mt-2">이미지 업로드</p>
             </div>
             <div className="mb-4 flex items-center justify-center space-x-4">
@@ -126,8 +184,13 @@ function RecordsComponent(props) {
                 <button className="border border-solid border-[#605bff1a] text-[#605bff] px-32 py-2 rounded-xl">삭제
                 </button>
                 <button className="bg-[#605bff] text-white px-32 py-2 rounded-xl">저장</button>
+                <button onClick={handleDeleteSelected} className="border border-solid border-[#605bff1a] text-[#605bff] px-32 py-2 rounded-xl">삭제</button>
                 <button onClick={handleSubmit} className="bg-[#605bff] text-white px-32 py-2 rounded-xl">저장</button>
             </div>
+
+            {isModalOpen && selectedMeal && (
+                <ModalComponent meal={selectedMeal} onClose={handleCloseModal} onUpdate={loadMeals} />
+            )}
         </div>
     );
 }
