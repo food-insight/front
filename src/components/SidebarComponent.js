@@ -91,8 +91,13 @@ const SidebarComponent = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex justify-end pb-10 pr-8 cursor-pointer">
 
+                <div className="flex justify-end pb-10 pr-8 cursor-pointer">
+                    {isLogin ? (
+                        <span className="text-base font-semibold text-gray-600 hover:text-red-500" onClick={handleLogoutClick}>Logout</span>
+                    ) : (
+                        <span className="text-base font-semibold text-gray-600 hover:text-blue-500" onClick={handleLoginClick}>Login</span>
+                    )}
                 </div>
             </div>
             {isLoginModalOpen && <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />}

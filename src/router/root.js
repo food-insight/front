@@ -53,14 +53,7 @@ const root = createBrowserRouter([
         element: (<RecipeProvider><Suspense fallback={Loading}><Recipe/></Suspense>
         </RecipeProvider>)
     },
-    // {
-    //     path: "/login",
-    //     element: <Suspense fallback={Loading}><Login/></Suspense>
-    // },
-    // {
-    //     path: "/signup",
-    //     element: <Suspense fallback={Loading}><Signup/></Suspense>
-    // },
+
     {
         path: "/calendar",
         element: <Suspense fallback={Loading}><Calendar/></Suspense>
