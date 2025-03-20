@@ -3,40 +3,44 @@ import ChatInput from "./ChatInput";
 import ChatOutput from "./ChatOutput";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([]); // 메시지 상태 관리
 
-  const handleSend = async (input) => {
-    const userMessage = { input, output: "⏳ 응답을 기다리는 중..." };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+  const sendMessage = async (message) => {
+    if (!message.trim()) return; // 빈 메시지 방지
+
+    const requestBody = {
+      user_id: 1, // 사용자 ID (임시 설정, 백엔드에서 JWT 필요하면 수정해야 함)
+      message: message,
+    };
 
     try {
-      // **백엔드 연결 전이라면 여기서 더미 응답 사용**
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch("http://localhost:8000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
-      setMessages((prevMessages) =>
-        prevMessages.map((msg, idx) =>
-          idx === prevMessages.length - 1 ? { ...msg, output: data.response } : msg
-        )
-      );
+
+      if (response.ok) {
+        // 새로운 메시지를 추가 (사용자 메시지 + 챗봇 응답)
+        setMessages([...messages, { text: message, sender: "user" }, { text: data.response, sender: "bot" }]);
+      } else {
+        console.error("API 요청 실패:", data);
+      }
     } catch (error) {
-      console.error("백엔드 오류:", error);
-      setMessages((prevMessages) =>
-        prevMessages.map((msg, idx) =>
-          idx === prevMessages.length - 1 ? { ...msg, output: "⚠️ 오류 발생! 다시 시도해주세요." } : msg
-        )
-      );
+      console.error("오류 발생:", error);
     }
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-6 border border-gray-300 rounded-lg">
-      <ChatOutput messages={messages} />
-      <ChatInput onSend={handleSend} />
+    <div className="w-full max-w-lg mx-auto p-6 border border-gray-300 rounded-lg bg-white shadow-md">
+      <div className="h-96 overflow-y-auto p-4 bg-gray-100 rounded-md">
+        {messages.map((msg, index) => (
+          <ChatOutput key={index} text={msg.text} sender={msg.sender} />
+        ))}
+      </div>
+      <ChatInput onSend={sendMessage} />
     </div>
   );
 };

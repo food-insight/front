@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import useCustomLogin from "../../hooks/useCustomLogin";
-import { signupMember } from "../../api/memberApi";
+import { register } from "../../api/memberApi";
 
 const LoginModal = ({ isOpen, onClose }) => {
     const [isLogin, setIsLogin] = useState(true); // true면 로그인, false면 회원가입
     const [loginParam, setLoginParam] = useState({ email: '', password: '', keepLoggedIn: false });
-    const [signupParam, setSignupParam] = useState({ email: '', password: '', nickname: '', role: 'USER' });
+    const [signupParam, setSignupParam] = useState({ email: '', password: '', role: 'USER', name: '', gender: '', birth: '', allergies: '', health_goal: '' });
     const [errors, setErrors] = useState({ email: '', password: '' });
     const { doLogin } = useCustomLogin();
 
     const emailRegEx = /^[A-Za-z0-9]([-_.]?[A-Za-z0-9])*@[A-Za-z0-9]([-_.]?[A-Za-z0-9])*\.[A-Za-z]{2,3}$/i;
-    const passwordRegEx = /^[A-Za-z0-9]{8,20}$/;
+    const passwordRegEx = /^[A-Za-z0-9!@#$%^&*()_+[\]{};':"\\|,.<>/?`~-]{8,20}$/;
 
     // 입력 핸들러
     const handleChange = (e) => {
@@ -67,7 +67,7 @@ const LoginModal = ({ isOpen, onClose }) => {
     // 회원가입 유효성 검사
     const validateSignup = () => {
         let isValid = true;
-        const newErrors = { email: '', password: '', nickname: '' };
+        const newErrors = { email: '', password: '', name: '', gender: '', birth: '', allergies: '', health_goal: '' };
 
         if (!emailRegEx.test(signupParam.email)) {
             newErrors.email = '유효한 이메일 주소를 입력하세요.';
@@ -79,8 +79,28 @@ const LoginModal = ({ isOpen, onClose }) => {
             isValid = false;
         }
 
-        if (!signupParam.nickname) {
-            newErrors.nickname = '닉네임을 입력하세요.';
+        if (!signupParam.name) {
+            newErrors.name = '이름을 입력하세요.';
+            isValid = false;
+        }
+
+        if (!signupParam.gender) {
+            newErrors.gender = '성별을 선택하세요.';
+            isValid = false;
+        }
+
+        if (!signupParam.birth) {
+            newErrors.birth = '생년월일을 입력하세요.';
+            isValid = false;
+        }
+
+        if (!signupParam.allergies) {
+            newErrors.allergies = '알레르기를 입력하세요.';
+            isValid = false;
+        }
+
+        if (!signupParam.health_goal) {
+            newErrors.health_goal = '건강 목표를 입력하세요.';
             isValid = false;
         }
 
@@ -91,8 +111,8 @@ const LoginModal = ({ isOpen, onClose }) => {
     // 입력 필드 초기화 함수
     const refreshFields = () => {
         setLoginParam({ email: '', password: '', keepLoggedIn: false }); // 로그인 폼 초기화
-        setSignupParam({ email: '', password: '', nickname: '', role: 'USER' }); // 회원가입 폼 초기화
-        setErrors({ email: '', password: '', nickname: '' }); // 에러 메시지 초기화
+        setSignupParam({ email: '', password: '', nickname: '', role: 'USER', name: '', gender: '', birth: '', allergies: '', health_goal: '' }); // 회원가입 폼 초기화
+        setErrors({ email: '', password: '', nickname: '', name: '', gender: '', birth: '', allergies: '', health_goal: '' }); // 에러 메시지 초기화
     };
 
     // 로그인 버튼 클릭 핸들러
@@ -123,7 +143,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         }
 
         try {
-            await signupMember(signupParam);
+            await register(signupParam);
             alert('회원가입이 완료되었습니다. 로그인해주세요.');
             // 회원가입 후 입력란 초기화
             refreshFields();
@@ -132,7 +152,12 @@ const LoginModal = ({ isOpen, onClose }) => {
             setErrors({
                 email: error.response?.data?.error === "EMAIL_ALREADY_EXISTS" ? "이미 등록된 이메일입니다." : '',
                 password: '',
-                nickname: ''
+                nickname: '',
+                name: '',
+                gender: '',
+                birth: '',
+                allergies: '',
+                health_goal: ''
             });
         }
     };
@@ -200,22 +225,106 @@ const LoginModal = ({ isOpen, onClose }) => {
                 </div>
 
                 {!isLogin && (
-                    <div className="mb-4">
-                        <label className="block text-sm font-semibold mb-2" htmlFor="nickname">
-                            Nickname
-                        </label>
-                        <input
-                            id="nickname"
-                            name="nickname"
-                            type="text"
-                            value={signupParam.nickname}
-                            placeholder="닉네임을 입력하세요."
-                            onChange={handleChange}
-                            onKeyDown={handleKeyDown}
-                            className={`w-full p-2 border ${errors.nickname ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black`}
-                        />
-                        {errors.nickname && <p className="text-red-500 text-sm mt-1">{errors.nickname}</p>}
-                    </div>
+                    <>
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-2" htmlFor="name">
+                                Name
+                            </label>
+                            <input
+                                id="name"
+                                name="name"
+                                type="text"
+                                value={signupParam.name}
+                                placeholder="이름을 입력하세요."
+                                onChange={handleChange}
+                                onKeyDown={handleKeyDown}
+                                className={`w-full p-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black`}
+                            />
+                            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-2" htmlFor="gender">
+                                Gender
+                            </label>
+                            <div className="flex space-x-4">
+                                <button
+                                    type="button"
+                                    name="gender"
+                                    value="male"
+                                    onClick={() => handleChange({target: {name: 'gender', value: 'male'}})}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-colors duration-200 ${signupParam.gender === 'male' ? 'bg-black text-white border-black' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
+                                >
+                                    남성
+                                </button>
+                                <button
+                                    type="button"
+                                    name="gender"
+                                    value="female"
+                                    onClick={() => handleChange({target: {name: 'gender', value: 'female'}})}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-colors duration-200 ${signupParam.gender === 'female' ? 'bg-black text-white border-black' : 'bg-gray-100 text-gray-700 border-gray-300'}`}
+                                >
+                                    여성
+                                </button>
+                            </div>
+                            {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-2" htmlFor="birth">
+                                Birth
+                            </label>
+                            <input
+                                id="birth"
+                                name="birth"
+                                type="date"
+                                value={signupParam.birth}
+                                onChange={handleChange}
+                                onKeyDown={handleKeyDown}
+                                className={`w-full p-2 border ${errors.birth ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black`}
+                            />
+                            {errors.birth && <p className="text-red-500 text-sm mt-1">{errors.birth}</p>}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-2" htmlFor="allergies">
+                                Allergies
+                            </label>
+                            <input
+                                id="allergies"
+                                name="allergies"
+                                type="text"
+                                value={signupParam.allergies}
+                                placeholder="알레르기를 입력하세요. (쉼표로 구분)"
+                                onChange={(e) => handleChange({
+                                    target: {
+                                        name: 'allergies',
+                                        value: e.target.value.split(',').map(item => item.trim())
+                                    }
+                                })}
+                                onKeyDown={handleKeyDown}
+                                className={`w-full p-2 border ${errors.allergies ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black`}
+                            />
+                            {errors.allergies && <p className="text-red-500 text-sm mt-1">{errors.allergies}</p>}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold mb-2" htmlFor="health_goal">
+                                Health Goal
+                            </label>
+                            <input
+                                id="health_goal"
+                                name="health_goal"
+                                type="text"
+                                value={signupParam.health_goal}
+                                placeholder="건강 목표를 입력하세요."
+                                onChange={handleChange}
+                                onKeyDown={handleKeyDown}
+                                className={`w-full p-2 border ${errors.health_goal ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-black`}
+                            />
+                            {errors.health_goal && <p className="text-red-500 text-sm mt-1">{errors.health_goal}</p>}
+                        </div>
+                    </>
                 )}
 
                 <div className="mb-2">
@@ -226,7 +335,6 @@ const LoginModal = ({ isOpen, onClose }) => {
                         {isLogin ? "로그인" : "회원가입"}
                     </button>
                 </div>
-
 
                 <div className="text-center mt-6">
                     <p className="text-gray-600">
