@@ -11,9 +11,6 @@ function RecipeComponent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // 임시로 넣은 토큰
-    //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjUyNDcwMSwianRpIjoiOWZlODY1MzgtODE0Ni00NDdiLWFlMTgtNzAwMWUxNWIwNTJjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjciLCJuYmYiOjE3NDI1MjQ3MDEsImNzcmYiOiI5Njc1MjVhYS1hMmU1LTRjODUtYTA3MC1jZGVjMGJlMzdlOWQiLCJleHAiOjE3NDI2MTExMDF9.GCAoeNSkxRlfFP0v0l6wBbHNs2i0vtcUdZvMfFR3EG0";
-
     const token = getCookie("accessToken").replace("Bearer ", "");
 
 
@@ -40,7 +37,7 @@ function RecipeComponent() {
     );
 
     // 여러 배열 추가
-    const ingredientsList = ["두부", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물", "우유", "양배추"];
+    const ingredientsList = ["두부", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물", "양배추"];
     const mealTypes = ["아침", "점심", "저녁"];
     const healthGoals = ["단백질이많은", "저탄수화물", "저지방", "고탄수화물"];
 
@@ -109,7 +106,7 @@ function RecipeComponent() {
                     {filteredRecipes.map((recipe) => (
                         <div
                             key={recipe.id}
-                            className="bg-white p-4 shadow-lg rounded-lg cursor-pointer"
+                            className="bg-blue-50 p-4 shadow-lg rounded-lg cursor-pointer"
                             onClick={() => handleClick(recipe)}
                         >
                             <h3 className="text-xl font-semibold text-center mt-2">{recipe.title}</h3>
@@ -130,14 +127,17 @@ function RecipeComponent() {
                             </ul>
 
                             <h3 className="text-lg font-semibold mb-2">👩‍🍳 조리법</h3>
-                            <ol className="list-decimal list-inside space-y-2">
+                            <ul className="list-decimal list-inside space-y-2">
                                 {selectedRecipe.instructions.split('\n').map((step, index) => (
-                                    <li key={index} className="text-gray-700">{step}</li>
+                                    <li key={index} className="text-gray-700">{step.replace(/^\d+\.\s*/, '')}</li>
                                 ))}
-                            </ol>
-                            <button onClick={closeModal} className="mt-4 px-4 py-2 font-semibold text-gray-600 hover:text-blue-500">
+                            </ul>
+                            <button onClick={closeModal}
+                                    className="mt-4 px-4 py-2 font-semibold text-gray-600 hover:text-blue-500">
                                 닫기
                             </button>
+
+
                         </div>
                     </div>
                 )}

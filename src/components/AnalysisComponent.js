@@ -11,8 +11,6 @@ const AnalysisComponent = () => {
     const [nutritionalInfo, setNutritionalInfo] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
     const [visibleFoodInfo, setVisibleFoodInfo] = useState({});  // 상태 추가
-    //const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjUyNDcwMSwianRpIjoiOWZlODY1MzgtODE0Ni00NDdiLWFlMTgtNzAwMWUxNWIwNTJjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjciLCJuYmYiOjE3NDI1MjQ3MDEsImNzcmYiOiI5Njc1MjVhYS1hMmU1LTRjODUtYTA3MC1jZGVjMGJlMzdlOWQiLCJleHAiOjE3NDI2MTExMDF9.GCAoeNSkxRlfFP0v0l6wBbHNs2i0vtcUdZvMfFR3EG0';  // 토큰은 실제로 사용하는 토큰으로 대체하세요.
-
     const token = getCookie("accessToken").replace("Bearer ", "");
 
     useEffect(() => {
