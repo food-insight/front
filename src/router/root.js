@@ -1,4 +1,3 @@
-import {RecipeProvider} from "./recipeContext";
 import { Suspense, lazy } from "react";
 
 import memberRouter from "./memberRouter";
@@ -44,14 +43,14 @@ const root = createBrowserRouter([
     {
 
             path: "/recommend",
-            element:(<RecipeProvider>
+            element:
                 <Suspense fallback={Loading}><Recommend/></Suspense>
-            </RecipeProvider>)
+
     },
     {
         path: "/recipe",
-        element: (<RecipeProvider><Suspense fallback={Loading}><Recipe/></Suspense>
-        </RecipeProvider>)
+        element: <Suspense fallback={Loading}><Recipe/></Suspense>
+
     },
 
     {
