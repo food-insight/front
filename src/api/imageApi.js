@@ -32,3 +32,20 @@ export const fetchImage = async (imagePath) => {
         throw error;
     }
 };
+
+export const recognizeFood = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+        const res = await jwtAxios.post(`${prefix}/food-recognition`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return res.data;
+    } catch (error) {
+        console.error("Failed to recognize food:", error);
+        throw error;
+    }
+};

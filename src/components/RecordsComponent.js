@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { FaCamera } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import { FaCamera, FaMicrophone } from "react-icons/fa";
 import { recordMeal, fetchMeals, deleteMeal } from "../api/mealApi";
-import { uploadImage } from "../api/imageApi";
+import { uploadImage, recognizeFood } from "../api/imageApi";
+import { recognizeSpeech } from "../api/speechApi";
 import ModalComponent from "./ModalComponent";
 
 function RecordsComponent(props) {
-    const [date, setDate] = useState("");
+    const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
     const [mealType, setMealType] = useState("아침");
-    const [dishName, setDishName] = useState("");
+    const [calories, setCalories] = useState("0");
     const [description, setDescription] = useState("");
     const [foodNames, setFoodNames] = useState([]);
     const [imageFile, setImageFile] = useState(null);
@@ -16,6 +17,11 @@ function RecordsComponent(props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMeal, setSelectedMeal] = useState(null);
     const [selectedMeals, setSelectedMeals] = useState([]);
+    const [isRecording, setIsRecording] = useState(false);
+    const audioContextRef = useRef(null);
+    const mediaStreamRef = useRef(null);
+    const scriptProcessorRef = useRef(null);
+    const audioBufferRef = useRef([]);
 
     useEffect(() => {
         loadMeals();
@@ -32,13 +38,14 @@ function RecordsComponent(props) {
 
     const handleDateChange = (e) => setDate(e.target.value);
     const handleMealChange = (e) => setMealType(e.target.value);
-    const handleDishChange = (e) => setDishName(e.target.value);
+    const handleCaloriesChange = (e) => setCalories(e.target.value);
     const handleDescriptionChange = (e) => setDescription(e.target.value);
     const handleFoodNamesChange = (e) => setFoodNames(e.target.value.split(',').map(item => item.trim()));
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         setImageFile(file);
         setImagePreview(URL.createObjectURL(file));
+        recognizeFoodFromImage(file); // Call the function to recognize food
     };
 
     const handleClearImage = () => {
@@ -52,6 +59,7 @@ function RecordsComponent(props) {
             meal_time: mealType,
             content: description,
             date: date,
+            calories: calories,
             food_names: foodNames
         };
 
@@ -99,22 +107,146 @@ function RecordsComponent(props) {
         }
     };
 
+    const recognizeFoodFromImage = async (file) => {
+        try {
+            const response = await recognizeFood(file);
+            const recognizedFoods = response.data.recognized_foods;
+            if (recognizedFoods.length > 0) {
+                const foodNames = recognizedFoods.map(food => food.name);
+                const description = recognizedFoods.map(food => food.details.description).join(', ');
+                const calories = recognizedFoods.map(food => food.details.calories).reduce((acc, cur) => acc + cur, 0);
+                setFoodNames(foodNames);
+                setDescription(description);
+                setCalories(calories);
+            }
+        } catch (error) {
+            console.error("Failed to recognize food:", error);
+        }
+    };
+    const toggleRecording = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    };
+
+    const startRecording = async () => {
+        setIsRecording(true);
+        audioBufferRef.current = [];
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        mediaStreamRef.current = audioContextRef.current.createMediaStreamSource(stream);
+        scriptProcessorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
+
+        scriptProcessorRef.current.onaudioprocess = (event) => {
+            const audioData = event.inputBuffer.getChannelData(0);
+            audioBufferRef.current.push(new Float32Array(audioData));
+        };
+
+        mediaStreamRef.current.connect(scriptProcessorRef.current);
+        scriptProcessorRef.current.connect(audioContextRef.current.destination);
+    };
+
+    const stopRecording = () => {
+        setIsRecording(false);
+        scriptProcessorRef.current.disconnect();
+        mediaStreamRef.current.disconnect();
+
+        const audioBlob = exportWAV(audioBufferRef.current);
+        const audioFile = new File([audioBlob], "recording.wav", { type: 'audio/wav' });
+        sendAudioToServer(audioFile);
+    };
+
+    const exportWAV = (audioBuffer) => {
+        const bufferLength = audioBuffer.reduce((acc, cur) => acc + cur.length, 0);
+        const result = new Float32Array(bufferLength);
+        let offset = 0;
+        for (let i = 0; i < audioBuffer.length; i++) {
+            result.set(audioBuffer[i], offset);
+            offset += audioBuffer[i].length;
+        }
+
+        const wavBuffer = encodeWAV(result, audioContextRef.current.sampleRate);
+        return new Blob([wavBuffer], { type: 'audio/wav' });
+    };
+
+    const encodeWAV = (samples, sampleRate) => {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+
+        return view;
+    };
+
+    const sendAudioToServer = async (audioFile) => {
+        try {
+            const response = await recognizeSpeech(audioFile);
+            if (response.success) {
+                const { meal_info, message, transcript } = response.data;
+                setMealType(meal_info.mealtime);
+                setFoodNames(meal_info.foods);
+                setDescription(transcript);
+                alert(message);
+            } else {
+                alert("음성 인식에 실패했습니다. 다시 시도해주세요.");
+            }
+        } catch (error) {
+            console.error("오디오 전송 실패:", error);
+            alert("음성 인식에 실패했습니다. 오디오 파일 형식을 확인해주세요.");
+        }
+    };
+
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
             <h2 className="text-xl font-bold mb-4">식단 기록</h2>
-            <div className="flex flex-col items-center mb-4">
-                <div className="w-32 h-32 rounded-full border border-gray-300 flex items-center justify-center">
-                    {imagePreview ? (
-                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-full" />
-                    ) : (
-                        <FaCamera className="text-4xl text-gray-500 cursor-pointer" onClick={() => document.getElementById('imageInput').click()} />
+           <div className="flex flex-row items-center justify-center mb-4">
+                <div className="flex flex-col items-center mr-4">
+                    <div className="w-32 h-32 rounded-full border border-gray-300 flex items-center justify-center">
+                        {imagePreview ? (
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                            <FaCamera className="text-4xl text-gray-500 cursor-pointer" onClick={() => document.getElementById('imageInput').click()} />
+                        )}
+                        <input id="imageInput" type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
+                    </div>
+                    {imagePreview && (
+                        <button onClick={handleClearImage} className="text-red-500">삭제</button>
                     )}
-                    <input id="imageInput" type="file" accept="image/*" onChange={handleImageChange} className="hidden"/>
+                    <p className="text-sm text-gray-600 mt-2">이미지 업로드</p>
                 </div>
-                {imagePreview && (
-                    <button onClick={handleClearImage} className=" text-red-500">삭제</button>
-                )}
-                <p className="text-sm text-gray-600 mt-2">이미지 업로드</p>
+                <div className="flex flex-col items-center ml-4">
+                    <div className="w-32 h-32 rounded-full border border-gray-300 flex items-center justify-center">
+                        <FaMicrophone className={`text-4xl ${isRecording ? 'text-red-500' : 'text-gray-500'} cursor-pointer`} onClick={toggleRecording} />
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">음성으로 입력하기</p>
+                </div>
             </div>
             <div className="mb-4 flex items-center justify-center space-x-4">
                 <label className="block text-m font-semibold text-gray-700">날짜 선택</label>
@@ -136,11 +268,11 @@ function RecordsComponent(props) {
                 </select>
             </div>
             <div className="mb-4">
-                <label className="block text-m font-semibold text-gray-700">요리명</label>
+                <label className="block text-m font-semibold text-gray-700">칼로리</label>
                 <input
-                    type="text"
-                    value={dishName}
-                    onChange={handleDishChange}
+                    type="number"
+                    value={calories}
+                    onChange={handleCaloriesChange}
                     className="mt-1 w-2/5 p-2 border rounded"
                 />
             </div>
