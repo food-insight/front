@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
-import API_SERVER_HOST from "../api/apiConfig";
+import { getCookie } from "../util/cookieUtil";
+
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -10,19 +11,12 @@ const AnalysisComponent = () => {
     const [nutritionalInfo, setNutritionalInfo] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
     const [visibleFoodInfo, setVisibleFoodInfo] = useState({});  // 상태 추가
-   // const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjQ1MzkzNSwianRpIjoiNjg5YjVjMmQtZGZkNC00NGE2LWExZmEtYTU2N2RiM2NjMTM0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3NDI0NTM5MzUsImNzcmYiOiI5NzNiY2NkOS1mY2ZlLTQ2NTMtODk3YS03ODY5NWUwMTQ4ZTQiLCJleHAiOjE3NDI1NDAzMzV9.OOVvXE8SbegLmJC4-9mJRyGDysqPE5olwoxgA36usEE';
+    //const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjUyNDcwMSwianRpIjoiOWZlODY1MzgtODE0Ni00NDdiLWFlMTgtNzAwMWUxNWIwNTJjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjciLCJuYmYiOjE3NDI1MjQ3MDEsImNzcmYiOiI5Njc1MjVhYS1hMmU1LTRjODUtYTA3MC1jZGVjMGJlMzdlOWQiLCJleHAiOjE3NDI2MTExMDF9.GCAoeNSkxRlfFP0v0l6wBbHNs2i0vtcUdZvMfFR3EG0';  // 토큰은 실제로 사용하는 토큰으로 대체하세요.
 
-// localStorage에서 토큰 가져오기
-    const token = localStorage.getItem("accessToken");
-    console.log("로그--->",token);
+    const token = getCookie("accessToken").replace("Bearer ", "");
 
     useEffect(() => {
-        if (!token) {
-            console.error("토큰이 없습니다. 로그인이 필요합니다.");
-            return;
-        }
-
-        fetch(`${API_SERVER_HOST}/meals/`, {
+        fetch('http://localhost:5000/api/meals/', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -35,7 +29,7 @@ const AnalysisComponent = () => {
                 const mealData = [];
 
                 data.meals.forEach((meal) => {
-                    const mealDate = meal.date;
+                    const mealDate = meal.date; // 날짜 가져오기
                     meal.foods.forEach((food) => {
                         meals.push(food.food_name);
                         mealData.push({
@@ -47,7 +41,7 @@ const AnalysisComponent = () => {
                 });
 
                 meals.forEach((foodName) => {
-                    fetch(`${API_SERVER_HOST}/nutrition?food=${foodName}&quantity=100&source=rag&unit=g`, {
+                    fetch(`http://localhost:5000/api/nutrition?food=${foodName}&quantity=100&source=rag&unit=g`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -70,14 +64,14 @@ const AnalysisComponent = () => {
                             }));
                         })
                         .catch((error) => {
-                            console.error('영양 정보 조회 중 오류 발생:', error);
+                            console.error('Error fetching nutrition data: ', error);
                         });
                 });
 
                 setAnalysisHistory(mealData);
             })
             .catch((error) => {
-                console.error('식단 정보 조회 중 오류 발생:', error);
+                console.error('Error fetching meals data: ', error);
             });
     }, [token]);
 
@@ -86,6 +80,7 @@ const AnalysisComponent = () => {
         const match = regex.exec(description);
         return match ? match[1] : '정보 없음';
     };
+
     const dailyData = {};
     analysisHistory.forEach((entry) => {
         if (!dailyData[entry.date]) {
@@ -157,7 +152,6 @@ const AnalysisComponent = () => {
                 <div className="w-full flex flex-col items-center">
                     {analysisHistory.length > 0 && (
                         <div className="h-96 w-full lg:w-1/2">
-                            <p>일별 영양소 섭취량</p>
                             <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
                         </div>
                     )}

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import API_SERVER_HOST from "../api/apiConfig";
+import { getCookie } from "../util/cookieUtil";
 
 // 레시피 컴포넌트
 function RecipeComponent() {
@@ -9,8 +11,14 @@ function RecipeComponent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // 임시로 넣은 토큰 (나중에 로그인 로직에서 동적으로 할당해야 함....)
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjQ1MzkzNSwianRpIjoiNjg5YjVjMmQtZGZkNC00NGE2LWExZmEtYTU2N2RiM2NjMTM0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjMiLCJuYmYiOjE3NDI0NTM5MzUsImNzcmYiOiI5NzNiY2NkOS1mY2ZlLTQ2NTMtODk3YS03ODY5NWUwMTQ4ZTQiLCJleHAiOjE3NDI1NDAzMzV9.OOVvXE8SbegLmJC4-9mJRyGDysqPE5olwoxgA36usEE";
+    // 임시로 넣은 토큰
+    //const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjUyNDcwMSwianRpIjoiOWZlODY1MzgtODE0Ni00NDdiLWFlMTgtNzAwMWUxNWIwNTJjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjciLCJuYmYiOjE3NDI1MjQ3MDEsImNzcmYiOiI5Njc1MjVhYS1hMmU1LTRjODUtYTA3MC1jZGVjMGJlMzdlOWQiLCJleHAiOjE3NDI2MTExMDF9.GCAoeNSkxRlfFP0v0l6wBbHNs2i0vtcUdZvMfFR3EG0";
+
+    const token = getCookie("accessToken").replace("Bearer ", "");
+
+
+    // 랜덤 요소 추출 함수
+    const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
     // 레시피 검색
     const handleSearchChange = (e) => {
@@ -31,26 +39,46 @@ function RecipeComponent() {
         recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    // 여러 배열 추가
+    const ingredientsList = ["두부", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물", "우유", "양배추"];
+    const mealTypes = ["아침", "점심", "저녁"];
+    const healthGoals = ["단백질이많은", "저탄수화물", "저지방", "고탄수화물"];
+
     useEffect(() => {
         const fetchRecipes = async () => {
             setLoading(true);
-            try {
-                const response = await fetch('http://localhost:5000/api/recommendations/recipes?ingredients=닭고기,마늘&meal_type=저녁&health_goal=단백질이많은', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // 헤더에 사용자 토큰 포함
-                    }
-                });
 
-                if (!response.ok) {
-                    throw new Error('레시피 데이터를 불러오는 데 실패했습니다.');
+            try {
+                const recipesPromises = [];
+
+                // 여러 개의 레시피를 가져오기 위해 반복
+                for (let i = 0; i < 3; i++) {
+                    const randomIngredient = getRandomElement(ingredientsList);
+                    const randomMealType = getRandomElement(mealTypes);
+                    const randomHealthGoal = getRandomElement(healthGoals);
+
+                    const apiUrl = `${API_SERVER_HOST}/recommendations/recipes?ingredients=${randomIngredient}&meal_type=${randomMealType}&health_goal=${randomHealthGoal}`;
+                    const promise = fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }).then((response) => response.json());
+
+                    recipesPromises.push(promise);
                 }
 
-                const data = await response.json();
-                setRecipes(data.data.recipes);
+                const results = await Promise.all(recipesPromises);  // 모든 API 호출 결과를 기다림
+
+                // 여러 페이지의 레시피 데이터를 합침
+                const allRecipes = results.reduce((acc, data) => {
+                    return [...acc, ...data.data.recipes];
+                }, []);
+
+                setRecipes(allRecipes);  // 모든 레시피를 상태에 설정
             } catch (error) {
-                setError(error.message);
+                setError('레시피 데이터를 불러오는 데 실패했습니다.');
             } finally {
                 setLoading(false);
             }
@@ -84,11 +112,6 @@ function RecipeComponent() {
                             className="bg-white p-4 shadow-lg rounded-lg cursor-pointer"
                             onClick={() => handleClick(recipe)}
                         >
-                            <img
-                                src={recipe.image || '/images/default.jpg'}
-                                alt={recipe.title}
-                                className="w-full h-48 object-cover rounded-lg"
-                            />
                             <h3 className="text-xl font-semibold text-center mt-2">{recipe.title}</h3>
                         </div>
                     ))}
@@ -99,11 +122,6 @@ function RecipeComponent() {
                     <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50" onClick={closeModal}>
                         <div className="bg-white p-6 max-w-2xl mx-auto rounded-lg" onClick={(e) => e.stopPropagation()}>
                             <h2 className="text-2xl font-bold mb-4">{selectedRecipe.title}</h2>
-                            <img
-                                src={selectedRecipe.image || '/images/default.jpg'}
-                                alt={selectedRecipe.title}
-                                className="w-full h-40 object-cover rounded-lg mb-4"
-                            />
                             <h3 className="text-lg font-semibold mb-2">📌 재료</h3>
                             <ul className="list-disc list-inside space-y-1 mb-4">
                                 {selectedRecipe.ingredients.map((ingredient, index) => (
