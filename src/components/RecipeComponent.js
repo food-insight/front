@@ -37,7 +37,7 @@ function RecipeComponent() {
     );
 
     // 여러 배열 추가
-    const ingredientsList = ["두부", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물", "양배추"];
+    const ingredientsList = ["두부", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물"];
     const mealTypes = ["아침", "점심", "저녁"];
     const healthGoals = ["단백질이많은", "저탄수화물", "저지방", "고탄수화물"];
 
