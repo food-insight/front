@@ -18,10 +18,10 @@ function RecordsComponent(props) {
     const [selectedMeal, setSelectedMeal] = useState(null);
     const [selectedMeals, setSelectedMeals] = useState([]);
     const [isRecording, setIsRecording] = useState(false);
-    const [audioBlob, setAudioBlob] = useState(null);
-
-    const mediaRecorderRef = useRef(null);
-    const audioChunksRef = useRef([]);
+    const audioContextRef = useRef(null);
+    const mediaStreamRef = useRef(null);
+    const scriptProcessorRef = useRef(null);
+    const audioBufferRef = useRef([]);
 
     useEffect(() => {
         loadMeals();
@@ -125,63 +125,103 @@ function RecordsComponent(props) {
     };
     const toggleRecording = () => {
         if (isRecording) {
-            mediaRecorderRef.current.stop();
+            stopRecording();
         } else {
             startRecording();
         }
     };
 
-    const startRecording = () => {
+    const startRecording = async () => {
         setIsRecording(true);
-        audioChunksRef.current = []; // 🔹녹음 시작 시 초기화
+        audioBufferRef.current = [];
 
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                mediaRecorderRef.current = mediaRecorder;
-                mediaRecorder.start();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        mediaStreamRef.current = audioContextRef.current.createMediaStreamSource(stream);
+        scriptProcessorRef.current = audioContextRef.current.createScriptProcessor(4096, 1, 1);
 
-                mediaRecorder.addEventListener("dataavailable", event => {
-                    audioChunksRef.current.push(event.data);
-                });
+        scriptProcessorRef.current.onaudioprocess = (event) => {
+            const audioData = event.inputBuffer.getChannelData(0);
+            audioBufferRef.current.push(new Float32Array(audioData));
+        };
 
-                mediaRecorder.addEventListener("stop", () => {
-                    if (audioChunksRef.current.length === 0) {
-                        console.error("No audio data recorded.");
-                        alert("녹음된 오디오가 없습니다.");
-                        return;
-                    }
-
-                    // 🔹Blob으로 변환 후 File 생성
-                    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-                    const audioFile = new File([audioBlob], "recording.wav", { type: 'audio/wav' });
-
-                    setAudioBlob(audioFile);
-                    setIsRecording(false);
-                    sendAudioToServer(audioFile);
-                });
-            })
-            .catch(error => {
-                console.error("Error accessing microphone:", error);
-                alert("마이크 접근에 실패했습니다.");
-                setIsRecording(false);
-            });
+        mediaStreamRef.current.connect(scriptProcessorRef.current);
+        scriptProcessorRef.current.connect(audioContextRef.current.destination);
     };
 
-  const sendAudioToServer = async (audioFile) => {
-      try {
-          if (audioFile.type !== 'audio/wav') {
-              throw new Error("오디오 파일이 WAV 형식이 아닙니다.");
-          }
+    const stopRecording = () => {
+        setIsRecording(false);
+        scriptProcessorRef.current.disconnect();
+        mediaStreamRef.current.disconnect();
 
-          await recognizeSpeech(audioFile);
-          alert("음성 인식이 성공적으로 완료되었습니다.");
-      } catch (error) {
-          console.error("Failed to send audio:", error);
-          alert("음성 인식에 실패했습니다. 오디오 파일 형식을 확인하세요.");
-      }
-  };
+        const audioBlob = exportWAV(audioBufferRef.current);
+        const audioFile = new File([audioBlob], "recording.wav", { type: 'audio/wav' });
+        sendAudioToServer(audioFile);
+    };
 
+    const exportWAV = (audioBuffer) => {
+        const bufferLength = audioBuffer.reduce((acc, cur) => acc + cur.length, 0);
+        const result = new Float32Array(bufferLength);
+        let offset = 0;
+        for (let i = 0; i < audioBuffer.length; i++) {
+            result.set(audioBuffer[i], offset);
+            offset += audioBuffer[i].length;
+        }
+
+        const wavBuffer = encodeWAV(result, audioContextRef.current.sampleRate);
+        return new Blob([wavBuffer], { type: 'audio/wav' });
+    };
+
+    const encodeWAV = (samples, sampleRate) => {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        const writeString = (view, offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+
+        return view;
+    };
+
+    const sendAudioToServer = async (audioFile) => {
+        try {
+            const response = await recognizeSpeech(audioFile);
+            if (response.success) {
+                const { meal_info, message, transcript } = response.data;
+                setMealType(meal_info.mealtime);
+                setFoodNames(meal_info.foods);
+                setDescription(transcript);
+                alert(message);
+            } else {
+                alert("음성 인식에 실패했습니다. 다시 시도해주세요.");
+            }
+        } catch (error) {
+            console.error("오디오 전송 실패:", error);
+            alert("음성 인식에 실패했습니다. 오디오 파일 형식을 확인해주세요.");
+        }
+    };
 
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
