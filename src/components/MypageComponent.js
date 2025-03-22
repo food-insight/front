@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import RecipeComponent from "./RecipeComponent";
 
 const MyPageComponent = () => {
     const [userInfo, setUserInfo] = useState(null);
@@ -30,7 +31,7 @@ const MyPageComponent = () => {
                     <p><strong>건강 목표:</strong> {userInfo.health_goal}</p><br/>
                 </div>
             </div>
-            );
-            };
+    );
+};
 
             export default MyPageComponent;

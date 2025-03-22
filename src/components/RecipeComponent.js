@@ -10,9 +10,8 @@ function RecipeComponent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
     const token = getCookie("accessToken").replace("Bearer ", "");
-
+    const [userInfo, setUserInfo] = useState(null);
 
     // 랜덤 요소 추출 함수
     const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -37,24 +36,34 @@ function RecipeComponent() {
     );
 
     // 여러 배열 추가
-    const ingredientsList = ["두부", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물"];
+    const ingredientsList = ["두부","오이", "토마토", "양상추", "양파", "닭가슴살", "연어", "브로콜리", "고구마", "소고기", "콩나물", "마늘", "간장", "김치", "계란", "감자", "프로틴"];
     const mealTypes = ["아침", "점심", "저녁"];
-    const healthGoals = ["단백질이많은", "저탄수화물", "저지방", "고탄수화물"];
+
 
     useEffect(() => {
+        // userInfo를 localStorage에서 가져오기
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            setUserInfo(JSON.parse(storedUser));
+        }
+    }, []);
+
+    useEffect(() => {
+        if (userInfo === null) {
+            return;  // userInfo가 없으면 레시피를 가져오지 않음
+        }
+
         const fetchRecipes = async () => {
             setLoading(true);
 
             try {
                 const recipesPromises = [];
 
-                // 여러 개의 레시피를 가져오기 위해 반복
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < 10; i++) {
                     const randomIngredient = getRandomElement(ingredientsList);
                     const randomMealType = getRandomElement(mealTypes);
-                    const randomHealthGoal = getRandomElement(healthGoals);
 
-                    const apiUrl = `${API_SERVER_HOST}/recommendations/recipes?ingredients=${randomIngredient}&meal_type=${randomMealType}&health_goal=${randomHealthGoal}`;
+                    const apiUrl = `${API_SERVER_HOST}/recommendations/recipes?ingredients=${randomIngredient}&meal_type=${randomMealType}&health_goal=${userInfo.health_goal}`;
                     const promise = fetch(apiUrl, {
                         method: 'GET',
                         headers: {
@@ -65,6 +74,14 @@ function RecipeComponent() {
 
                     recipesPromises.push(promise);
                 }
+
+                Promise.all(recipesPromises)
+                    .then((recipes) => {
+                        console.log("추천된 레시피:", recipes);
+                    })
+                    .catch((error) => {
+                        console.error("레시피 가져오기 실패:", error);
+                    });
 
                 const results = await Promise.all(recipesPromises);  // 모든 API 호출 결과를 기다림
 
@@ -82,14 +99,21 @@ function RecipeComponent() {
         };
 
         fetchRecipes();
-    }, [token]);
+    }, [token, userInfo]);
 
     if (loading) return <div>로딩 중...</div>;
     if (error) return <div>{error}</div>;
+    if (userInfo === null) {
+        return <div>로딩 중...</div>;
+    }
 
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
             <h2 className="text-xl font-bold mb-4">추천 레시피</h2>
+            {userInfo && userInfo.name && (
+                <p>💪 {userInfo.name}님의 건강 목표: <strong>{userInfo.health_goal}</strong></p>
+            )}
+            <br />
             {/* 검색창 */}
             <div className="flex justify-end mb-4 w-full">
                 <input
@@ -116,7 +140,8 @@ function RecipeComponent() {
 
                 {/* 모달: 레시피 상세보기 */}
                 {isModalOpen && selectedRecipe && (
-                    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50" onClick={closeModal}>
+                    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50"
+                         onClick={closeModal}>
                         <div className="bg-white p-6 max-w-2xl mx-auto rounded-lg" onClick={(e) => e.stopPropagation()}>
                             <h2 className="text-2xl font-bold mb-4">{selectedRecipe.title}</h2>
                             <h3 className="text-lg font-semibold mb-2">📌 재료</h3>
@@ -136,8 +161,6 @@ function RecipeComponent() {
                                     className="mt-4 px-4 py-2 font-semibold text-gray-600 hover:text-blue-500">
                                 닫기
                             </button>
-
-
                         </div>
                     </div>
                 )}
