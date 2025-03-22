@@ -13,6 +13,7 @@ function MainComponent() {
     const [carbGoal, setCarbGoal] = useState("");
     const [fatGoal, setFatGoal] = useState("");
     const [caloriesGoal, setCaloriesGoal] = useState("");
+
     const [goalsSaved, setGoalsSaved] = useState(false);
     const [mealStats, setMealStats] = useState({});
     const [frequentFoods, setFrequentFoods] = useState({});

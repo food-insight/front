@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import API_SERVER_HOST from "../api/apiConfig";
 import { getCookie } from "../util/cookieUtil";
 
-// 레시피 컴포넌트
 function RecipeComponent() {
     const [recipes, setRecipes] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,7 +15,6 @@ function RecipeComponent() {
     // 랜덤 요소 추출 함수
     const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-    // 레시피 검색
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
     };

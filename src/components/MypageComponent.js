@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import RecipeComponent from "./RecipeComponent";
 
 const MyPageComponent = () => {
     const [userInfo, setUserInfo] = useState(null);
 
     useEffect(() => {
-        // 로컬 스토리지에서 'user' 키로 저장된 데이터 가져오기
+
         const storedUser = localStorage.getItem("user");
 
         if (storedUser) {
@@ -34,4 +33,4 @@ const MyPageComponent = () => {
     );
 };
 
-            export default MyPageComponent;
+export default MyPageComponent;
