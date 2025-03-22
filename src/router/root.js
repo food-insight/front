@@ -18,6 +18,7 @@ const Recipe= lazy(()=> import("../pages/RecipePage"))
 // const Login= lazy(()=> import("../pages/LoginPage"))
 // const Signup= lazy(()=> import("../pages/SignupPage"))
 const Calendar= lazy(()=> import("../pages/CalendarPage"))
+ const Mypage= lazy(()=> import("../pages/MypagePage"))
 
 const root = createBrowserRouter([
     {
@@ -56,6 +57,11 @@ const root = createBrowserRouter([
     {
         path: "/calendar",
         element: <Suspense fallback={Loading}><Calendar/></Suspense>
+    },
+
+    {
+        path: "/mypage",
+        element: <Suspense fallback={Loading}><Mypage/></Suspense>
     }
 ])
 

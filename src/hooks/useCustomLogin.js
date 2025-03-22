@@ -42,6 +42,10 @@ const useCustomLogin = () => {
             removeCookie("member");
             removeCookie("accessToken");
             removeCookie("refreshToken");
+            // 로컬 스토리지에서 'user' 키 제거
+            localStorage.removeItem("user");
+            console.log(localStorage.getItem("user")); // null이면 삭제된 것
+
             alert("로그아웃되었습니다.");
         } catch (error) {
             console.error("Logout failed:", error);

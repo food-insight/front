@@ -1,84 +1,47 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Calendar } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
-import { Dialog, DialogActions, Button, TextField } from "@mui/material";
+import interactionPlugin from "@fullcalendar/interaction";
 import axios from "axios";
-import dayjs from "dayjs";
 
 function CalendarComponent() {
     const calendarRef = useRef(null);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [eventTitle, setEventTitle] = useState("");
     const [events, setEvents] = useState([]);
+
+    // 저장된 식사 데이터 불러오기
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const response = await axios.get("/api/meals"); // 식사 데이터 API 호출
+                const mealEvents = response.data.map(meal => ({
+                    title: meal.food_names.join(", "), // 여러 음식 이름을 하나의 문자열로 합침
+                    start: meal.date, // meal.date를 사용하여 시작 날짜 설정
+                    end: meal.date, // 같은 날에만 표시
+                }));
+                setEvents(mealEvents);
+            } catch (error) {
+                console.error("식사 데이터 불러오기 실패:", error);
+            }
+        };
+
+        fetchEvents();
+    }, []);
 
     useEffect(() => {
         const calendar = new Calendar(calendarRef.current, {
-            plugins: [dayGridPlugin, timeGridPlugin, listPlugin],
-            initialView: "dayGridMonth", // 초기 뷰 설정
-            events: events, // 캘린더에 표시할 이벤트
-            dateClick: (info) => handleDateClick(info), // 날짜 클릭 시 이벤트 처리
+            plugins: [dayGridPlugin, listPlugin, interactionPlugin],
+            initialView: "dayGridMonth",
+            events: events,
+            selectable: false, // 이벤트 추가 기능을 비활성화
         });
 
         calendar.render();
     }, [events]);
 
-    const handleDateClick = (info) => {
-        setSelectedDate(info.dateStr);
-        setOpenDialog(true); // 다이얼로그 열기
-    };
-
-    const handleDialogClose = () => {
-        setOpenDialog(false);
-        setEventTitle(""); // 다이얼로그 닫을 때 제목 초기화
-    };
-
-    const handleEventSave = async () => {
-        if (eventTitle.trim() === "") return;
-
-        // 새로운 이벤트 저장
-        const newEvent = {
-            title: eventTitle,
-            start: selectedDate,
-            end: selectedDate,
-        };
-
-        // 이벤트 추가 API 호출 (예시: axios를 사용해 백엔드로 데이터 전송)
-        try {
-            await axios.post("/api/events", newEvent); // 실제 API URL로 변경 필요
-            setEvents([...events, newEvent]); // 캘린더에 새 이벤트 추가
-            handleDialogClose();
-        } catch (error) {
-            console.error("이벤트 저장 실패:", error);
-        }
-    };
-
     return (
         <div>
             <div ref={calendarRef}></div>
-
-            <Dialog open={openDialog} onClose={handleDialogClose}>
-                <div className="dialog-content" style={{ padding: "20px" }}>
-                    <h2>새 이벤트 추가</h2>
-                    <TextField
-                        label="이벤트 제목"
-                        variant="outlined"
-                        fullWidth
-                        value={eventTitle}
-                        onChange={(e) => setEventTitle(e.target.value)}
-                    />
-                </div>
-                <DialogActions>
-                    <Button onClick={handleDialogClose} color="secondary">
-                        취소
-                    </Button>
-                    <Button onClick={handleEventSave} color="primary">
-                        저장
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </div>
     );
 }
