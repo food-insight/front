@@ -1,71 +1,162 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Calendar } from "@fullcalendar/core";
+import React, { useEffect, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import listPlugin from "@fullcalendar/list";
-import interactionPlugin from "@fullcalendar/interaction";
+import { Dialog, DialogActions, Button, TextField } from "@mui/material";
 import axios from "axios";
+import dayjs from "dayjs";
 import { getCookie } from "../util/cookieUtil";
 
-
 function CalendarComponent() {
-    const calendarRef = useRef(null);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [eventTitle, setEventTitle] = useState("");
     const [events, setEvents] = useState([]);
 
     const token = getCookie("accessToken").replace("Bearer ", "");
 
-    // 저장된 식사 데이터 불러오기
     useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                const response = await axios.get("http://localhost:5000/api/meals/", {
-                    headers: {
-                        Authorization: `Bearer ${token}`, // Authorization 헤더에 토큰 추가
-                    },
-                });
+        fetchMealsAndSetEvents();
+    }, []);
 
-                const mealEvents = response.data.meals.map(meal => {
-                    // meal.foods에서 음식 이름을 모아서 하나의 문자열로 합침
-                    const foodNames = meal.foods.map(food => food.food_name).join(", ");
+    const fetchMealsAndSetEvents = async () => {
+        try {
+            const response = await axios.get("http://localhost:5000/api/meals", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
 
-                    // 이벤트 객체 생성
-                    return {
-                        title: `${foodNames} (${meal.meal_time})`, // 제목에 음식 이름과 식사 시간 추가
-                        start: meal.date, // 시작 날짜 설정
-                        end: meal.date, // 같은 날짜에만 표시되도록 설정
-                        extendedProps: {
-                            mealTime: meal.meal_time,
-                            content: meal.content
-                        }
-                    };
-                });
+            const mealEvents = (response.data.meals || []).map((meal) => {
+                const foodText = meal.foods.map(f => f.food_name).join(", ");
+                let backgroundColor = "#ccc";
+                if (meal.meal_time === "아침") backgroundColor = "#FFC7E0CC";
+                if (meal.meal_time === "점심") backgroundColor = "#CBEFFFCC";
+                if (meal.meal_time === "저녁") backgroundColor = "#D8CDFFCC";
 
-                setEvents(mealEvents);
-            } catch (error) {
-                console.error("식사 데이터 불러오기 실패:", error);
-            }
+                return {
+                    title: `${meal.meal_time} : ${foodText}`,
+                    start: meal.date,
+                    allDay: true,
+                    id: `meal-${meal.mid}`,
+                    backgroundColor,
+                    borderColor: backgroundColor,
+                    textColor: "#00080A",
+                };
+            });
+
+            setEvents(mealEvents);
+        } catch (error) {
+            console.error("식사 데이터를 불러오는 데 실패했습니다:", error);
+        }
+    };
+
+    const handleDateClick = (arg) => {
+        setSelectedDate(arg.dateStr);
+        setOpenDialog(true);
+    };
+
+    const handleDialogClose = () => {
+        setOpenDialog(false);
+        setEventTitle("");
+    };
+
+    const handleEventSave = () => {
+        if (eventTitle.trim() === "") return;
+
+        const newEvent = {
+            title: eventTitle,
+            start: selectedDate,
+            allDay: true,
+            id: `custom-${Date.now()}`,
+            textColor: "#504E4E",
         };
 
-        fetchEvents();
-    }, [token]); // 토큰이 변경될 때마다 다시 요청
+        setEvents((prev) => [...prev, newEvent]);
+        handleDialogClose();
+    };
 
-    useEffect(() => {
-        const calendar = new Calendar(calendarRef.current, {
-            plugins: [dayGridPlugin, listPlugin, interactionPlugin],
-            initialView: "dayGridMonth",
-            events: events,
-            selectable: false, // 이벤트 추가 기능을 비활성화
-            eventClick: (info) => {
-                // 이벤트 클릭 시 상세 정보 보여주기 (선택적으로 추가 가능)
-                alert(`식사 시간: ${info.event.extendedProps.mealTime}\n내용: ${info.event.extendedProps.content}`);
-            }
-        });
-
-        calendar.render();
-    }, [events]);
+    const highlightToday = (date) => {
+        const today = dayjs().format("YYYY-MM-DD");
+        return date === today ? "today-number-highlight" : "";
+    };
 
     return (
-        <div className="bg-white p-4 shadow-lg rounded-lg">
-            <div ref={calendarRef} className="w-full"></div>
+        <div className="calendar-wrapper">
+            <FullCalendar
+                plugins={[dayGridPlugin]}
+                initialView="dayGridMonth"
+                dateClick={handleDateClick}
+                events={events}
+                dayCellClassNames={(arg) => highlightToday(arg.dateStr)}
+                height="auto"
+                contentHeight="auto"
+                aspectRatio={1.35}
+                headerToolbar={{
+                    start: "title",
+                    center: "",
+                    end: "prev,next"
+                }}
+                eventDidMount={(info) => {
+                    info.el.setAttribute("title", info.event.title);
+                }}
+            />
+
+            <Dialog open={openDialog} onClose={handleDialogClose}>
+                <div className="dialog-content" style={{ padding: "20px" }}>
+                    <h2>사용자 이벤트 추가</h2>
+                    <TextField
+                        label="이벤트 제목"
+                        variant="outlined"
+                        fullWidth
+                        value={eventTitle}
+                        onChange={(e) => setEventTitle(e.target.value)}
+                    />
+                </div>
+                <DialogActions>
+                    <Button onClick={handleDialogClose} color="secondary">
+                        취소
+                    </Button>
+                    <Button onClick={handleEventSave} color="primary">
+                        저장
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <style>
+                {`
+                    .calendar-wrapper {
+                        width: 100%;
+                        max-width: 1000px;
+                        margin: 0 auto;
+                        padding: 0 1rem;
+                        box-sizing: border-box;
+                        overflow-x: auto;
+                    }
+
+                    /* 헤더 스타일 조정 */
+                    .fc-toolbar-title {
+                        font-size: 1.5rem;
+                        display: flex;
+                        gap: 0.25em;
+                    }
+
+                    .fc-toolbar-title::first-letter {
+                        font-weight: bold;
+                    }
+
+                    @media (max-width: 768px) {
+                        .fc-toolbar-title {
+                            font-size: 1.25rem;
+                        }
+
+                        .calendar-wrapper {
+                            padding-left: 0.5rem;
+                            padding-right: 0.5rem;
+                        }
+                    }
+                `}
+            </style>
         </div>
     );
 }

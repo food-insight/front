@@ -79,7 +79,7 @@ const SidebarComponent = () => {
                         </div>
                         <div className="flex items-center space-x-4 pt-8 cursor-pointer">
                             <img src={setting} alt="Setting" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <Link to="/mypage" className="text-base font-semibold text-gray-600 hover:text-blue-500">
+                            <Link to="/profile" className="text-base font-semibold text-gray-600 hover:text-blue-500">
                                 마이 페이지
                             </Link>
                         </div>
