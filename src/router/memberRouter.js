@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 
 const Loading = <div className="loading-image"></div>
 const Logout = lazy(() => import("../pages/member/LogoutPage"))
+const Profile = lazy(() => import("../pages/ProfilePage"));
 // const CheckPassword = lazy(() => import("../pages/member/CheckPasswordPage"))
 // const Mypage = lazy(() => import("../pages/member/Mypage"));
 
@@ -15,10 +16,10 @@ const memberRouter = () => {
         //     path: "modify",
         //     element: <Suspense fallback={Loading}><CheckPassword /></Suspense>,
         // },
-        // {
-        //     path: "mypage/:mno",
-        //     element: <Suspense fallback={Loading}><Mypage /></Suspense>,
-        // },
+        {
+            path: "profile",
+            element: <Suspense fallback={Loading}><Profile /></Suspense>,
+        },
     ]
 }
 

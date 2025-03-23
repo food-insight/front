@@ -1,11 +1,11 @@
 import React from 'react';
+import ProfileComponent from '../components/ProfileComponent';
 import BasicLayout from '../layouts/BasicLayout';
-import MypageComponent from "../components/MypageComponent";
 
 const MainPage = () => {
     return (
         <BasicLayout>
-            <MypageComponent />
+            <ProfileComponent />
         </BasicLayout>
     );
 }
