@@ -11,9 +11,24 @@ const AnalysisComponent = () => {
     const [nutritionalInfo, setNutritionalInfo] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
     const [visibleFoodInfo, setVisibleFoodInfo] = useState({});  // 상태 추가
-    const token = getCookie("accessToken").replace("Bearer ", "");
+    const [token, setToken] = useState("");
+
 
     useEffect(() => {
+        const storedToken = getCookie("accessToken")?.replace("Bearer ", "");
+        setToken(storedToken);
+    }, []);
+
+
+    useEffect(() => {
+
+        if (token === null) {
+            alert("로그인 후 이용해주세요.");
+            window.location.href = "/";
+        }
+
+       if (!token) return;  // ✅ 토큰이 없으면 API 요청을 하지 않음.
+
         fetch('http://localhost:5000/api/meals/', {
             method: 'GET',
             headers: {

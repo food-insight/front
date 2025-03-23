@@ -8,7 +8,6 @@ import ModalComponent from "./ModalComponent";
 function RecordsComponent(props) {
     const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
     const [mealType, setMealType] = useState("아침");
-    const [calories, setCalories] = useState("0");
     const [description, setDescription] = useState("");
     const [foodNames, setFoodNames] = useState([]);
     const [imageFile, setImageFile] = useState(null);
@@ -38,7 +37,6 @@ function RecordsComponent(props) {
 
     const handleDateChange = (e) => setDate(e.target.value);
     const handleMealChange = (e) => setMealType(e.target.value);
-    const handleCaloriesChange = (e) => setCalories(e.target.value);
     const handleDescriptionChange = (e) => setDescription(e.target.value);
     const handleFoodNamesChange = (e) => setFoodNames(e.target.value.split(',').map(item => item.trim()));
     const handleImageChange = (e) => {
@@ -59,7 +57,6 @@ function RecordsComponent(props) {
             meal_time: mealType,
             content: description,
             date: date,
-            calories: calories,
             food_names: foodNames
         };
 
@@ -114,10 +111,8 @@ function RecordsComponent(props) {
             if (recognizedFoods.length > 0) {
                 const foodNames = recognizedFoods.map(food => food.name);
                 const description = recognizedFoods.map(food => food.details.description).join(', ');
-                const calories = recognizedFoods.map(food => food.details.calories).reduce((acc, cur) => acc + cur, 0);
                 setFoodNames(foodNames);
                 setDescription(description);
-                setCalories(calories);
             }
         } catch (error) {
             console.error("Failed to recognize food:", error);
@@ -266,15 +261,6 @@ function RecordsComponent(props) {
                     <option>점심</option>
                     <option>저녁</option>
                 </select>
-            </div>
-            <div className="mb-4">
-                <label className="block text-m font-semibold text-gray-700">칼로리</label>
-                <input
-                    type="number"
-                    value={calories}
-                    onChange={handleCaloriesChange}
-                    className="mt-1 w-2/5 p-2 border rounded"
-                />
             </div>
             <div className="mb-4">
                 <label className="block text-m font-semibold text-gray-700">설명</label>

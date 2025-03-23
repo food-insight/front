@@ -5,18 +5,25 @@ import { Dialog, DialogActions, Button, TextField } from "@mui/material";
 import axios from "axios";
 import dayjs from "dayjs";
 import { getCookie } from "../util/cookieUtil";
+import interactionPlugin from '@fullcalendar/interaction';
 
 function CalendarComponent() {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
     const [eventTitle, setEventTitle] = useState("");
     const [events, setEvents] = useState([]);
-
-    const token = getCookie("accessToken").replace("Bearer ", "");
+    const token = getCookie("accessToken")?.replace("Bearer ", ""); // 토큰 가져오기
 
     useEffect(() => {
-        fetchMealsAndSetEvents();
-    }, []);
+        if (token) {
+            fetchMealsAndSetEvents();
+        }
+    }, [token]);
+
+    useEffect(() => {
+        console.log("openDialog 상태:", openDialog);
+    }, [openDialog]);
+
 
     const fetchMealsAndSetEvents = async () => {
         try {
@@ -52,8 +59,10 @@ function CalendarComponent() {
     };
 
     const handleDateClick = (arg) => {
+        console.log("날짜 클릭됨:", arg.dateStr); // 확인용 로그
         setSelectedDate(arg.dateStr);
         setOpenDialog(true);
+        console.log("openDialog 상태 변경 요청: true");
     };
 
     const handleDialogClose = () => {
@@ -78,15 +87,19 @@ function CalendarComponent() {
 
     const highlightToday = (date) => {
         const today = dayjs().format("YYYY-MM-DD");
-        return date === today ? "today-number-highlight" : "";
+        return date === today ? "bg-secondary text-black font-bold" : "";
     };
 
     return (
-        <div className="calendar-wrapper">
+        <div className="w-full max-w-4xl mx-auto px-4 overflow-x-auto">
             <FullCalendar
-                plugins={[dayGridPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin]}
                 initialView="dayGridMonth"
-                dateClick={handleDateClick}
+                dateClick={(arg) => {
+                    console.log("📌 dateClick 이벤트 실행됨!", arg);
+                    handleDateClick(arg);
+                }}
+                selectable={true} // ✅ 클릭 허용
                 events={events}
                 dayCellClassNames={(arg) => highlightToday(arg.dateStr)}
                 height="auto"
@@ -102,9 +115,10 @@ function CalendarComponent() {
                 }}
             />
 
+            {/* 다이얼로그 모달 */}
             <Dialog open={openDialog} onClose={handleDialogClose}>
-                <div className="dialog-content" style={{ padding: "20px" }}>
-                    <h2>사용자 이벤트 추가</h2>
+                <div className="p-5">
+                    <h2 className="text-lg font-semibold mb-3">사용자 이벤트 추가</h2>
                     <TextField
                         label="이벤트 제목"
                         variant="outlined"
@@ -122,41 +136,6 @@ function CalendarComponent() {
                     </Button>
                 </DialogActions>
             </Dialog>
-
-            <style>
-                {`
-                    .calendar-wrapper {
-                        width: 100%;
-                        max-width: 1000px;
-                        margin: 0 auto;
-                        padding: 0 1rem;
-                        box-sizing: border-box;
-                        overflow-x: auto;
-                    }
-
-                    /* 헤더 스타일 조정 */
-                    .fc-toolbar-title {
-                        font-size: 1.5rem;
-                        display: flex;
-                        gap: 0.25em;
-                    }
-
-                    .fc-toolbar-title::first-letter {
-                        font-weight: bold;
-                    }
-
-                    @media (max-width: 768px) {
-                        .fc-toolbar-title {
-                            font-size: 1.25rem;
-                        }
-
-                        .calendar-wrapper {
-                            padding-left: 0.5rem;
-                            padding-right: 0.5rem;
-                        }
-                    }
-                `}
-            </style>
         </div>
     );
 }
