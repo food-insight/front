@@ -10,7 +10,6 @@ import document from "../asset/icon/document.png";
 import logo from "../asset/icon/logo.png";
 import ticket from "../asset/icon/ticket.png";
 import setting from "../asset/icon/setting.png";
-import menu from "../asset/icon/menu.png";
 import recipe from "../asset/icon/recipe.png";
 
 const handleAlert = () => {
@@ -42,10 +41,6 @@ const SidebarComponent = () => {
                         <h1 className="text-2xl font-semibold text-gray-800">영양 인사이트</h1>
                     </div>
                     <div className="flex flex-col items-start pr-8 pl-8 space-y-6">
-                        <div className="flex items-center space-x-4 cursor-pointer" onClick={handleAlert}>
-                            <img src={menu} alt="menu" className="w-6 h-6 opacity-30 hover:opacity-50"/>
-                            <span className="text-base font-semibold text-gray-600 hover:text-blue-500">Menu</span>
-                        </div>
                         <div className="flex items-center space-x-4 cursor-pointer">
                             <img src={chart} alt="Chart" className="w-6 h-6 opacity-30 hover:opacity-50"/>
                             <Link to="/Analysis" className="text-base font-semibold text-gray-600 hover:text-blue-500">

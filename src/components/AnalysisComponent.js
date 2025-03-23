@@ -11,8 +11,6 @@ const AnalysisComponent = () => {
     const [nutritionalInfo, setNutritionalInfo] = useState({});
     const [currentWeek, setCurrentWeek] = useState(0);
     const [visibleFoodInfo, setVisibleFoodInfo] = useState({});  // 상태 추가
-    //const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0MjUyNDcwMSwianRpIjoiOWZlODY1MzgtODE0Ni00NDdiLWFlMTgtNzAwMWUxNWIwNTJjIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6IjciLCJuYmYiOjE3NDI1MjQ3MDEsImNzcmYiOiI5Njc1MjVhYS1hMmU1LTRjODUtYTA3MC1jZGVjMGJlMzdlOWQiLCJleHAiOjE3NDI2MTExMDF9.GCAoeNSkxRlfFP0v0l6wBbHNs2i0vtcUdZvMfFR3EG0';  // 토큰은 실제로 사용하는 토큰으로 대체하세요.
-
     const token = getCookie("accessToken").replace("Bearer ", "");
 
     useEffect(() => {
@@ -84,7 +82,7 @@ const AnalysisComponent = () => {
     const dailyData = {};
     analysisHistory.forEach((entry) => {
         if (!dailyData[entry.date]) {
-            dailyData[entry.date] = { carbs: 0, protein: 0, fat: 0, totalCalories: 0, meals: {} };
+            dailyData[entry.date] = {carbs: 0, protein: 0, fat: 0, totalCalories: 0, meals: {}};
         }
         if (nutritionalInfo[entry.food]) {
             dailyData[entry.date].carbs += parseFloat(nutritionalInfo[entry.food].carbs) || 0;
@@ -139,7 +137,6 @@ const AnalysisComponent = () => {
     return (
         <div className="relative w-full h-auto bg-white rounded-[10px] shadow-lg p-6">
             <h2 className="text-xl font-bold mb-4">식단 분석 결과</h2>
-
             <div className="relative w-full flex justify-center items-center mt-8">
                 <button
                     className="absolute left-48 top-1/2 -translate-y-1/2 text-blue-500 w-10 h-10 bg-gray-50 rounded-[10px] hover:bg-gray-200"
@@ -152,7 +149,23 @@ const AnalysisComponent = () => {
                 <div className="w-full flex flex-col items-center">
                     {analysisHistory.length > 0 && (
                         <div className="h-96 w-full lg:w-1/2">
-                            <Line data={chartData} options={{ responsive: true, maintainAspectRatio: false }} />
+                            {/* 차트 */}
+                            <Line
+                                data={chartData}
+                                options={{
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        title: {
+                                            display: true,
+                                            text: '일별 영양소 섭취량',
+                                            font: {
+                                                size: 18,
+                                            },
+                                        },
+                                    },
+                                }}
+                            />
                         </div>
                     )}
                 </div>
@@ -207,5 +220,4 @@ const AnalysisComponent = () => {
         </div>
     );
 };
-
 export default AnalysisComponent;

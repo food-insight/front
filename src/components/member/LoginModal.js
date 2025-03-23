@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import useCustomLogin from "../../hooks/useCustomLogin";
 import { register } from "../../api/memberApi";
+import { useDispatch } from 'react-redux';
 
 const LoginModal = ({ isOpen, onClose }) => {
     const [isLogin, setIsLogin] = useState(true); // true면 로그인, false면 회원가입
@@ -11,6 +12,8 @@ const LoginModal = ({ isOpen, onClose }) => {
 
     const emailRegEx = /^[A-Za-z0-9]([-_.]?[A-Za-z0-9])*@[A-Za-z0-9]([-_.]?[A-Za-z0-9])*\.[A-Za-z]{2,3}$/i;
     const passwordRegEx = /^[A-Za-z0-9!@#$%^&*()_+[\]{};':"\\|,.<>/?`~-]{8,20}$/;
+
+
 
     // 입력 핸들러
     const handleChange = (e) => {
@@ -128,6 +131,7 @@ const LoginModal = ({ isOpen, onClose }) => {
                     password: '이메일 또는 비밀번호가 유효하지 않습니다.'
                 });
             } else {
+                localStorage.setItem("user", JSON.stringify(data));
                 alert("다시 오셨군요! 환영합니다.");
                 // 로그인 후 입력란 초기화
                 refreshFields();
@@ -136,7 +140,6 @@ const LoginModal = ({ isOpen, onClose }) => {
         });
     };
 
-    // 회원가입 버튼 클릭 핸들러
     const handleClickSignup = async () => {
         if (!validateSignup()) {
             return;
@@ -145,9 +148,14 @@ const LoginModal = ({ isOpen, onClose }) => {
         try {
             await register(signupParam);
             alert('회원가입이 완료되었습니다. 로그인해주세요.');
+
             // 회원가입 후 입력란 초기화
             refreshFields();
             setIsLogin(true); // 회원가입 후 로그인 화면으로 돌아가기
+
+            // 로컬 스토리지에 회원 정보 저장
+            localStorage.setItem('user', JSON.stringify(signupParam));
+
         } catch (error) {
             setErrors({
                 email: error.response?.data?.error === "EMAIL_ALREADY_EXISTS" ? "이미 등록된 이메일입니다." : '',
@@ -161,6 +169,7 @@ const LoginModal = ({ isOpen, onClose }) => {
             });
         }
     };
+
 
     const confirmClose = () => {
         if (window.confirm("진행상황이 저장되지 않습니다. 정말로 닫으시겠습니까?")) {
