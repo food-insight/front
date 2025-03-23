@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { getCookie } from "../util/cookieUtil";
-import { Bar, Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Bar, Pie } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend,
+    ArcElement
+} from "chart.js";
 
 // Chart.js 설정
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -18,27 +27,31 @@ function MainComponent() {
     const [mealStats, setMealStats] = useState({});
     const [frequentFoods, setFrequentFoods] = useState({});
 
-    const token = getCookie("accessToken").replace("Bearer ", "");
+    const rawToken = getCookie("accessToken");
+    const token = rawToken ? rawToken.replace("Bearer ", "") : null;
 
     useEffect(() => {
-        axios.get("http://localhost:5000/api/recommendations/meal", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then((response) => {
-                const balancedMeals = response.data.data.recommendations.balanced_meal;
-                setMealData(balancedMeals.slice(0, 3));
+        // 로그인한 경우에만 API 호출
+        if (token) {
+            axios.get("http://localhost:5000/api/recommendations/meal", {
+                headers: { Authorization: `Bearer ${token}` }
             })
-            .catch((error) => console.error("Error fetching meal data", error));
+                .then((response) => {
+                    const balancedMeals = response.data.data.recommendations.balanced_meal;
+                    setMealData(balancedMeals.slice(0, 3));
+                })
+                .catch((error) => console.error("Error fetching meal data", error));
 
-        axios.get("http://localhost:5000/api/meals/statistics", {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then((response) => {
-                setMealStats(response.data.statistics.grouped_statistics);
-                setFrequentFoods(response.data.statistics.most_frequent_foods);
+            axios.get("http://localhost:5000/api/meals/statistics", {
+                headers: { Authorization: `Bearer ${token}` }
             })
-            .catch((error) => console.error("Error fetching meal statistics", error));
-    }, []);
+                .then((response) => {
+                    setMealStats(response.data.statistics.grouped_statistics);
+                    setFrequentFoods(response.data.statistics.most_frequent_foods);
+                })
+                .catch((error) => console.error("Error fetching meal statistics", error));
+        }
+    }, [token]);  // token이 변경될 때 API 호출
 
     // 목표 저장 함수
     const handleSaveGoals = () => {
@@ -49,10 +62,10 @@ function MainComponent() {
         labels: Object.keys(mealStats),
         datasets: [
             {
-                label: '식사 수',
+                label: "식사 수",
                 data: Object.values(mealStats).map(item => item.meals),
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                borderColor: "rgba(255, 99, 132, 1)",
                 borderWidth: 1,
             },
         ],
@@ -62,21 +75,21 @@ function MainComponent() {
         labels: Object.keys(frequentFoods),
         datasets: [
             {
-                label: '식사 빈도수',
+                label: "식사 빈도수",
                 data: Object.values(frequentFoods),
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
+                    "rgba(255, 99, 132, 0.2)",
+                    "rgba(54, 162, 235, 0.2)",
+                    "rgba(255, 206, 86, 0.2)",
+                    "rgba(75, 192, 192, 0.2)",
+                    "rgba(153, 102, 255, 0.2)",
                 ],
                 borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
+                    "rgba(255, 99, 132, 1)",
+                    "rgba(54, 162, 235, 1)",
+                    "rgba(255, 206, 86, 1)",
+                    "rgba(75, 192, 192, 1)",
+                    "rgba(153, 102, 255, 1)",
                 ],
                 borderWidth: 1,
             },
@@ -170,18 +183,18 @@ function MainComponent() {
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-700">식사 횟수</h2>
                     <div className="h-[300px]">
-                        <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: true, aspectRatio: 2 }} />
+                        <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: true }} />
                     </div>
                 </div>
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h2 className="text-xl font-semibold text-gray-700">자주 먹은 음식</h2>
                     <div className="h-[300px]">
-                        <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: true, aspectRatio: 2 }} />
+                        <Pie data={pieChartData} options={{ responsive: true, maintainAspectRatio: true }} />
                     </div>
                 </div>
             </div>
         </div>
     );
-};
+}
 
 export default MainComponent;

@@ -9,17 +9,16 @@ module.exports = {
         text: '#333',  // 기본 텍스트 색상
         eventBackground: '#0056b3',  // 이벤트 배경 색상
       },
-      backgroundImage: {
-        // 배경 이미지가 필요한 경우 추가 가능
-      },
       spacing: {
-        // 추가적인 padding, margin, width, height 등을 설정
+        'custom-padding': '1rem',
+        'custom-margin': '1.5rem',
       },
       fontSize: {
-        // 폰트 사이즈 확장 가능
+        'custom-sm': '0.875rem',
+        'custom-lg': '1.5rem',
       },
       borderRadius: {
-        'rounded-lg': '0.5rem',  // 버튼 및 이벤트의 둥근 모서리 크기
+        'custom-lg': '0.5rem',  // 버튼 및 이벤트의 둥근 모서리 크기
       },
     },
   },

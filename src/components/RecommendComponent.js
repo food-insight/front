@@ -22,6 +22,7 @@ function RecommendComponent() {
             return;
         }
 
+
         const token = getCookie("accessToken").replace("Bearer ", "");
 
         // 식단 추천 API 호출
@@ -53,7 +54,7 @@ function RecommendComponent() {
     // 유사 음식 추천 API 호출
     const fetchSimilarFoods = async () => {
         try {
-            const food = favoriteFood || "두부"; // 기본값을 두부로 설정
+            const food = favoriteFood ; // 기본값을 두부로 설정
             const response = await axios.get(`http://localhost:5000/api/recommend/similar?food=${food}&limit=5`);
 
             if (response.data) {

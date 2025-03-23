@@ -9,8 +9,21 @@ function RecipeComponent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const token = getCookie("accessToken").replace("Bearer ", "");
     const [userInfo, setUserInfo] = useState(null);
+
+    let token = getCookie("accessToken");
+    if (token) token = token.replace("Bearer ", "");
+
+    // ✅ token이 null이면 즉시 alert 후 리다이렉트
+    useEffect(() => {
+        if (!token) {
+            alert("로그인 후 이용해주세요.");
+            window.location.href = "/";
+            return;
+        }
+    }, [token]);
+
+
 
     // 랜덤 요소 추출 함수
     const getRandomElement = (arr) => arr[Math.floor(Math.random() * arr.length)];

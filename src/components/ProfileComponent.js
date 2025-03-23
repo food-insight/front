@@ -7,15 +7,28 @@ function ProfileComponent() {
   const [formData, setFormData] = useState({});
   const [newAllergy, setNewAllergy] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const token = getCookie("accessToken").replace("Bearer ", "");
+  const [token, setToken] = useState(undefined); // ✅ 초기 상태는 undefined
+
+
+  // ✅ 토큰 가져오기
+  useEffect(() => {
+    const storedToken = getCookie("accessToken")?.replace("Bearer ", "");
+    setToken(storedToken || null);
+  }, []);
 
   useEffect(() => {
+
+    if (token === null) {
+      alert("로그인 후 이용해주세요.");
+      window.location.href = "/";
+    }
+
     async function fetchProfile() {
       const data = await getProfile(token);
       setProfile(data);
       setFormData({ ...data });
     }
-    fetchProfile();
+    if (token) fetchProfile();
   }, [token]);
 
   const handleChange = (e) => {
